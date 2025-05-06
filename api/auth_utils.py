@@ -30,17 +30,11 @@ if not CLERK_PUBLISHABLE_KEY:
 
 # Extract the core domain part (e.g., dazzling-lemming-12.clerk.accounts.dev)
 try:
-    # Handle potential pk_test_ or pk_live_ prefix and the '$' suffix
-    domain_part = CLERK_PUBLISHABLE_KEY.split('_')[1].split('$')[0].replace('.', '.').replace('-', '-')
-    # Construct common issuer URL format for Clerk cloud instances
-    # Adjust if using a custom domain with Clerk
     CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL')
-    CLERK_JWKS_URL = f"{CLERK_ISSUER_URL}/.well-known/jwks.json"
-    print(f"DEBUG: Using JWKS URL: {CLERK_JWKS_URL}")
+    CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL')
 except IndexError:
     raise ValueError("Could not derive Clerk domain from Publishable Key. Set CLERK_ISSUER_URL manually.")
 
-print(f"Derived Clerk Issuer URL: {CLERK_ISSUER_URL}") # For debugging
 
 # Function to get JWKs with caching
 def get_jwks():
