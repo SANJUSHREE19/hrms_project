@@ -1,0 +1,96 @@
+# Environment variables
+.env
+.env.*
+frontend/.env
+frontend/.env.*
+backend/.env # If you ever created one there
+!/.env.example # Optionally allow example env files
+
+# Python / Django
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+db.sqlite3
+db.sqlite3-journal
+instance/
+/staticfiles/ # Directory for collectstatic output
+/media/ # User-uploaded media files (if applicable)
+*.log
+*.pot
+*.mo
+htmlcov/ # Coverage reports
+.pnp.js
+.coverage
+.coverage.*
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual Environment
+# --- CRUCIAL: Exclude your backend virtual environment ---
+backend_env/
+# General virtualenv patterns (also covers 'env' if created at root)
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Frontend / React / Node
+frontend/node_modules/
+frontend/build/
+frontend/.pnp.*
+frontend/.yarn/*
+frontend/coverage/
+frontend/.npm
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# AWS CLI configuration files (should not be committed)
+.aws/
+
+# Logs directory (created by logging config in settings.py example)
+logs/ # Assuming it's at the same level as manage.py
+
+# PyCharm files
+.idea*/
+
+# Example: Database migration settings for Flyway/Liquibase (if used)
+# flyway-*/
+# liquibase-*/
+
+# Other temporary files
+*.bak
+*.tmp
+
+# Jenkins / Build artifacts (if any created locally)
+target/
+dist/
+
+# MySQL/DB specific (usually not needed as credentials are in .env)
+# my.cnf
+# .pgpass

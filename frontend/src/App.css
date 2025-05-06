@@ -1,0 +1,434 @@
+/* src/App.css - Modern Dark Theme */
+
+/* 1. Global Reset & Variables */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Color Palette */
+  --bg-primary: #1a1d24; /* Slightly desaturated dark blue/grey */
+  --bg-secondary: #282c34; /* Slightly lighter for cards/containers */
+  --text-primary: #e8e8e8; /* Off-white for main text */
+  --text-secondary: #a0a0a0; /* Grey for less important text */
+  --accent-primary: #00aaff; /* Bright blue accent */
+  --accent-primary-darker: #0088cc; /* Darker blue for active states */
+  --accent-secondary: #5a67d8; /* A secondary purple/indigo accent (optional) */
+  --border-color: #404552; /* Subtle borders */
+  --error-color: #e53e3e;
+  --success-color: #48bb78;
+
+  /* Transitions */
+  --transition-speed: 0.3s;
+  --transition-ease: ease-in-out;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 170, 255, 0.1), 0 1px 2px rgba(0, 170, 255, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 170, 255, 0.1), 0 2px 4px -1px rgba(0, 170, 255, 0.06);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 2. Main Layout */
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.App-header {
+  background: linear-gradient(90deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.App-header h1 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 1px;
+  text-shadow: 0 0 5px rgba(0, 170, 255, 0.5); /* Subtle glow */
+}
+
+main {
+  flex-grow: 1;
+  padding: 2rem;
+  max-width: 1200px; /* Constrain width for better readability */
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* 3. Navigation */
+nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* Spacing between nav items */
+}
+
+nav a {
+  color: var(--text-primary);
+  text-decoration: none;
+  padding: 0.5rem 0.8rem;
+  border-radius: 4px;
+  position: relative;
+  transition: color var(--transition-speed) var(--transition-ease), background-color var(--transition-speed) var(--transition-ease);
+}
+
+nav a::after { /* Underline effect */
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 50%;
+  background-color: var(--accent-primary);
+  transition: width var(--transition-speed) var(--transition-ease), left var(--transition-speed) var(--transition-ease);
+  transform: translateX(-50%);
+}
+
+nav a:hover,
+nav a:focus {
+  color: #fff;
+  background-color: rgba(0, 170, 255, 0.1); /* Subtle hover background */
+  outline: none;
+}
+
+nav a:hover::after,
+nav a:focus::after {
+  width: 80%; /* Animate underline on hover/focus */
+  left: 50%;
+}
+
+/* Style Clerk's UserButton slightly */
+.cl-userButton-root .cl-userButtonTrigger {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 1rem; /* Space it from other links */
+}
+.cl-userButton-root .cl-avatarBox {
+  box-shadow: 0 0 8px rgba(0, 170, 255, 0.6); /* Add glow */
+  transition: transform var(--transition-speed) var(--transition-ease);
+}
+.cl-userButton-root .cl-avatarBox:hover {
+  transform: scale(1.1);
+}
+
+/* 4. Headings and Text */
+h1, h2, h3, h4, h5, h6 {
+  color: #fff;
+  margin-bottom: 0.8rem;
+  line-height: 1.3;
+}
+h2 { font-size: 1.8rem; }
+h3 { font-size: 1.4rem; color: var(--text-primary); }
+
+p {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+strong {
+    color: var(--text-primary);
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 2rem 0;
+}
+
+/* 5. Buttons */
+button,
+a > button /* For buttons inside links */ {
+  display: inline-block;
+  background-color: var(--accent-primary);
+  color: #fff;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color var(--transition-speed) var(--transition-ease), transform var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease);
+  box-shadow: var(--shadow-sm);
+}
+
+button:hover,
+a > button:hover {
+  background-color: var(--accent-primary-darker);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+button:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+button:disabled {
+  background-color: #555;
+  color: #999;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Link styled as button */
+.button-link {
+    /* Apply button styles directly */
+    display: inline-block;
+    background-color: var(--accent-primary);
+    color: #fff !important; /* Override link color */
+    padding: 0.7rem 1.2rem;
+    border-radius: 5px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none !important; /* Override link underline */
+    transition: background-color var(--transition-speed) var(--transition-ease), transform var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease);
+    box-shadow: var(--shadow-sm);
+}
+.button-link:hover {
+    background-color: var(--accent-primary-darker);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* 6. Forms */
+form {
+  background-color: var(--bg-secondary);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="date"],
+input[type="password"],
+input[type="number"],
+select,
+textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: border-color var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease);
+  margin-bottom: 1rem; /* Space out form elements */
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(0, 170, 255, 0.3); /* Focus ring */
+}
+
+select {
+  appearance: none; /* Allows custom styling */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23a0a0a0'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E"); /* Basic arrow */
+  background-repeat: no-repeat;
+  background-position: right 0.7em top 50%;
+  background-size: 1.5em auto;
+}
+
+textarea {
+    resize: vertical; /* Allow vertical resizing only */
+}
+
+/* 7. Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  background-color: var(--bg-secondary);
+  border-radius: 5px;
+  overflow: hidden; /* Clip border radius */
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+th, td {
+  padding: 0.8rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+th {
+  background-color: rgba(0, 170, 255, 0.1); /* Accent background for header */
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+tr:last-child td {
+  border-bottom: none; /* Remove border from last row */
+}
+
+tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02); /* Very subtle striping */
+}
+
+tr:hover {
+    background-color: rgba(0, 170, 255, 0.05); /* Highlight row on hover */
+}
+
+td button {
+    padding: 0.4rem 0.8rem; /* Smaller buttons in tables */
+    font-size: 0.85rem;
+}
+
+td select {
+    margin-bottom: 0; /* Remove extra margin inside table cells */
+    width: auto; /* Don't force 100% width */
+    min-width: 120px;
+}
+
+
+/* 8. Lists */
+ul {
+  list-style: none; /* Remove default bullets */
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+li {
+  padding: 0.5rem 0;
+  /* Optional styling if needed */
+  /* border-bottom: 1px dashed var(--border-color); */
+}
+
+
+/* 9. Cards (Stat Cards, etc.) */
+.stat-card { /* Added matching class for consistency */
+  border: 1px solid var(--border-color);
+  padding: 15px;
+  margin: 10px;
+  border-radius: 8px;
+  background-color: var(--bg-secondary);
+  text-align: center;
+  min-width: 150px;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease);
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-card h3 {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card p {
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.stat-card a {
+    color: var(--accent-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.stat-card a:hover {
+    text-decoration: underline;
+}
+
+/* 10. Helper Classes / Misc */
+.error-message {
+    color: var(--error-color);
+    background-color: rgba(229, 62, 62, 0.1);
+    border: 1px solid rgba(229, 62, 62, 0.4);
+    padding: 0.8rem 1rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+.success-message {
+    color: var(--success-color);
+    background-color: rgba(72, 187, 120, 0.1);
+    border: 1px solid rgba(72, 187, 120, 0.4);
+    padding: 0.8rem 1rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+/* Basic loading indicator style */
+.loading-indicator {
+  /* Add your preferred loading style (e.g., spinner) */
+  padding: 2rem;
+  text-align: center;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+/* Example simple spinner animation */
+@keyframes spinner {
+  to {transform: rotate(360deg);}
+}
+.spinner {
+  display: inline-block;
+  width: 2em;
+  height: 2em;
+  border: 3px solid rgba(0, 170, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--accent-primary);
+  animation: spinner .8s linear infinite;
+  margin: 1rem auto;
+}
+
+/* Center content if needed, e.g., on login page */
+.center-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 150px); /* Adjust based on header height */
+    text-align: center;
+}

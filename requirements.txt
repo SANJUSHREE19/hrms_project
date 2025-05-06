@@ -1,0 +1,13 @@
+Django
+djangorestframework
+asgiref
+tzdata
+mysqlclient
+django-cors-headers
+clerk-sdk-python
+python-jose
+cryptography
+requests
+python-dotenv
+Werkzeug
+cachelib
