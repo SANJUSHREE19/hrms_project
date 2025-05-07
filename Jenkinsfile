@@ -31,29 +31,28 @@ pipeline {
                 echo "Building React frontend..."
                 // Navigate to frontend directory and build
                 sh '''
-                    set -ex # Exit on error, print commands
+                    set -ex 
 
-                    export NVM_DIR="$HOME/.nvm" # Ensure NVM is sourced if not already in Jenkins user profile
+                    export NVM_DIR="$HOME/.nvm" 
                     echo "Checking for NVM script at $NVM_DIR/nvm.sh"
                     if [ -s "$NVM_DIR/nvm.sh" ]; then
-                      \\. "$NVM_DIR/nvm.sh"  # Source NVM
+                      \\. "$NVM_DIR/nvm.sh"  
                       echo "NVM sourced successfully."
                     else
                       echo "ERROR: NVM script not found at $NVM_DIR/nvm.sh"
                       exit 1
                     fi
 
-                    # Explicitly install (if needed) and use the desired Node version
                     echo "Ensuring Node LTS version is installed and used..."
-                    nvm install --lts # Ensures LTS is installed or updates if needed
-                    nvm use --lts     # Activates the LTS version for this shell session
-                    nvm current       # Verify the active version
+                    nvm install --lts 
+                    nvm use --lts     
+                    nvm current       
 
                     echo "Changing directory to frontend..."
                     cd frontend
 
                     echo "Installing frontend dependencies using npm ci..."
-                    npm ci # Use 'ci' for cleaner installs in CI/CD
+                    npm ci 
 
                     echo "Building production frontend..."
                     npm run build
