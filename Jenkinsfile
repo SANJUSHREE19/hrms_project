@@ -29,43 +29,36 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 echo "Building React frontend..."
+                // Navigate to frontend directory and build
                 sh '''
-                    export NVM_DIR="$HOME/.nvm"
-                    echo "NVM_DIR is set to: $NVM_DIR"
+                    set -ex # Exit on error, print commands
 
+                    export NVM_DIR="$HOME/.nvm" # Ensure NVM is sourced if not already in Jenkins user profile
+                    echo "Checking for NVM script at $NVM_DIR/nvm.sh"
                     if [ -s "$NVM_DIR/nvm.sh" ]; then
-                        echo "Sourcing $NVM_DIR/nvm.sh..."
-                        . "$NVM_DIR/nvm.sh"  # Load NVM
-                        echo "NVM sourced."
+                      \. "$NVM_DIR/nvm.sh"  # Source NVM
+                      echo "NVM sourced successfully."
                     else
-                        echo "ERROR: NVM script not found at $NVM_DIR/nvm.sh"
-                        exit 1
+                      echo "ERROR: NVM script not found at $NVM_DIR/nvm.sh"
+                      exit 1
                     fi
-                    
-                    echo "Ensuring Node.js LTS version is installed and used..."
-                    nvm install --lts # Ensures LTS is installed
-                    nvm use --lts     # Activates LTS for this shell session
-                    
-                    echo "Current Node version: $(node -v)"
-                    echo "Current npm version: $(npm -v)"
 
-                    cd frontend 
-                    echo "Installing frontend dependencies..."
-                    npm ci 
+                    # Explicitly install (if needed) and use the desired Node version
+                    echo "Ensuring Node LTS version is installed and used..."
+                    nvm install --lts # Ensures LTS is installed or updates if needed
+                    nvm use --lts     # Activates the LTS version for this shell session
+                    nvm current       # Verify the active version
+
+                    echo "Changing directory to frontend..."
+                    cd frontend
+
+                    echo "Installing frontend dependencies using npm ci..."
+                    npm ci # Use 'ci' for cleaner installs in CI/CD
 
                     echo "Building production frontend..."
-                    CLERK_KEY=$(aws ssm get-parameter --name "/hrms/prod/clerk/publishable_key" --with-decryption --query "Parameter.Value" --output text --region us-east-1)
-                    
-                    if [ -z "$CLERK_KEY" ]; then
-                        echo "ERROR: Failed to fetch VITE_CLERK_PUBLISHABLE_KEY from SSM in us-east-1."
-                        exit 1 
-                    fi
-                    
-                    echo "VITE_CLERK_PUBLISHABLE_KEY=${CLERK_KEY}" > .env.production 
-                    echo "Contents of .env.production:" 
-                    cat .env.production 
-
                     npm run build
+
+                    echo "Frontend build complete."
                 '''
             }
         }
