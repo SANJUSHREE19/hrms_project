@@ -36,7 +36,7 @@ pipeline {
                     export NVM_DIR="$HOME/.nvm" # Ensure NVM is sourced if not already in Jenkins user profile
                     echo "Checking for NVM script at $NVM_DIR/nvm.sh"
                     if [ -s "$NVM_DIR/nvm.sh" ]; then
-                      \. "$NVM_DIR/nvm.sh"  # Source NVM
+                      \\. "$NVM_DIR/nvm.sh"  # Source NVM
                       echo "NVM sourced successfully."
                     else
                       echo "ERROR: NVM script not found at $NVM_DIR/nvm.sh"
