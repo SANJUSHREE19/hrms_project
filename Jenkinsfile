@@ -13,6 +13,11 @@ pipeline {
         // AWS_CREDENTIALS_ID      = 'aws-jenkins-hrms-user' // Uncomment if using specific IAM User for AWS CLI
     }
 
+    tools {
+        // Use the name you gave your NodeJS installation in Global Tool Configuration
+        nodejs 'NodeJS_LTS' 
+    }
+
     options {
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '10'))
@@ -30,63 +35,11 @@ pipeline {
             steps {
                 echo "Building React frontend..."
                 sh '''
-                    # We will manage exit explicitly around NVM setup first, then re-enable set -e if needed.
-                    # set -ex 
+                    set -ex 
 
-                    export NVM_DIR="$HOME/.nvm"
-                    echo "NVM_DIR is set to: $NVM_DIR"
-
-                    # Try to prevent nvm from auto-running 'use' during sourcing
-                    export NVM_AUTO_USE=false 
-
-                    if [ -s "$NVM_DIR/nvm.sh" ]; then
-                        echo "Sourcing $NVM_DIR/nvm.sh..."
-                        . "$NVM_DIR/nvm.sh"  # Load NVM
-                        NVM_SOURCED_CODE=$? # Capture exit code
-                        echo "NVM sourced, exit code from sourcing: $NVM_SOURCED_CODE"
-                        # Do NOT exit here even if nvm.sh sourcing returns non-zero, 
-                        # as we will immediately try to use a specific version.
-                        # The non-zero exit might be from its internal "auto use" failing.
-                    else
-                        echo "ERROR: NVM script not found at $NVM_DIR/nvm.sh"
-                        exit 1
-                    fi
-                    
-                    # Now that NVM is sourced (even if sourcing had an internal non-fatal exit), 
-                    # we explicitly tell it what to do.
-                    echo "Ensuring Node.js LTS version is installed..."
-                    nvm install --lts
-                    NVM_INSTALL_CODE=$?
-                    echo "nvm install --lts exit code: $NVM_INSTALL_CODE"
-                    if [ $NVM_INSTALL_CODE -ne 0 ]; then
-                        echo "ERROR: nvm install --lts failed with exit code $NVM_INSTALL_CODE"
-                        nvm debug || echo "nvm debug command also failed or not available"
-                        exit $NVM_INSTALL_CODE
-                    fi
-
-                    echo "Activating Node.js LTS version..."
-                    nvm use --lts     
-                    NVM_USE_CODE=$?
-                    echo "nvm use --lts exit code: $NVM_USE_CODE"
-                    if [ $NVM_USE_CODE -ne 0 ]; then
-                        echo "ERROR: nvm use --lts failed with exit code $NVM_USE_CODE"
-                        nvm debug || echo "nvm debug command also failed or not available"
-                        exit $NVM_USE_CODE
-                    fi
-                    
-                    echo "VERIFYING PATH and Node versions after nvm use:"
-                    echo "PATH is: $PATH"
-                    # Make sure node/npm are executable
-                    if ! command -v node > /dev/null || ! command -v npm > /dev/null; then
-                        echo "ERROR: node or npm not found in PATH after nvm use."
-                        exit 1
-                    fi
-                    
-                    echo "Current Node version: $(node -v)"
-                    echo "Current npm version: $(npm -v)"
-                    
-                    # Re-enable strict error checking from here if desired
-                    set -e
+                    echo "Verifying Node.js (from Jenkins Tool configuration):"
+                    node -v
+                    npm -v
 
                     cd frontend 
                     echo "Installing frontend dependencies..."
@@ -100,7 +53,7 @@ pipeline {
                         exit 1 
                     fi
                     
-                    echo "VITE_CLERK_PUBLISHABLE_KEY=${CLERK_KEY}" > .env.production # Corrected variable name
+                    echo "VITE_CLERK_PUBLISHABLE_KEY=${CLERK_KEY}" > .env.production 
                     echo "Contents of .env.production:" 
                     cat .env.production 
 
@@ -108,6 +61,7 @@ pipeline {
                 '''
             }
         }
+
 
         stage('Deploy Frontend') {
             steps {
@@ -141,7 +95,6 @@ pipeline {
 
                         echo "Installing/Updating backend dependencies..."
                         pip install -r requirements.txt
-                        pip install boto3 mysqlclient 
 
                         echo "Collecting static files..."
                         python manage.py collectstatic --noinput
