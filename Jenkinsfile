@@ -36,7 +36,7 @@ pipeline {
                 echo "Building React frontend..."
                 sh '''
                     export NVM_DIR="$HOME/.nvm"
-                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                    [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
                     # Ensure you use a Node.js version compatible with your project
                     nvm use --lts # Or specify your Node.js version e.g., nvm use 18 
 
