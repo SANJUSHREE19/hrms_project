@@ -1,21 +1,16 @@
 // Jenkinsfile
 pipeline {
-    agent any // Run on the main Jenkins node (our EC2 instance)
+    agent any
 
     environment {
-        AWS_REGION                 = 'us-east-1' // Your primary AWS region
-        GITHUB_CREDENTIALS_ID    = 'github-pat-hrms' // Jenkins credential ID for GitHub PAT
-        EC2_SSH_CREDENTIALS_ID   = 'ec2-ssh-key-hrms'  // Jenkins credential ID for EC2 SSH key
-        APP_DIR                    = "/home/ec2-user/hrms_project" // App directory on EC2 (your repo)
+        AWS_REGION                 = 'us-east-1'
+        GITHUB_CREDENTIALS_ID    = 'github-pat-hrms'
+        EC2_SSH_CREDENTIALS_ID   = 'ec2-ssh-key-hrms'
+        APP_DIR                    = "/home/ec2-user/hrms_project"
         VENV_DIR                   = "${APP_DIR}/env"
-        CLOUDFRONT_DISTRIBUTION_ID = 'E30K56N2AOR96V' // Your CloudFront Distribution ID
-        S3_BUCKET_NAME             = 'hrms-frontend-s3-bucket-name' // Your S3 bucket name
-
-        // For AWS CLI via shell (relies on EC2 Instance Role permissions).
-        // If you want to use specific IAM User keys instead of EC2 Role, create
-        // an 'AWS Credentials' type in Jenkins (e.g., with ID 'aws-jenkins-hrms-user')
-        // and uncomment the withCredentials block in the 'Deploy Frontend' stage.
-        // AWS_CREDENTIALS_ID         = 'aws-jenkins-hrms-user'
+        CLOUDFRONT_DISTRIBUTION_ID = 'E30K56N2AOR96V'
+        S3_BUCKET_NAME             = 'hrms-frontend-s3-bucket-name'
+        // AWS_CREDENTIALS_ID      = 'aws-jenkins-hrms-user' // Uncomment if using specific IAM User for AWS CLI
     }
 
     options {
@@ -27,7 +22,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo "Checking out code from GitHub..."
-                checkout scm // Uses Git Plugin, configured in Jenkins job SCM section
+                checkout scm
             }
         }
 
@@ -40,17 +35,16 @@ pipeline {
 
                     if [ -s "$NVM_DIR/nvm.sh" ]; then
                         echo "Sourcing $NVM_DIR/nvm.sh..."
-                        . "$NVM_DIR/nvm.sh"  # This loads NVM. MUST be a dot, then a space, then the path.
+                        . "$NVM_DIR/nvm.sh"  # Load NVM
                         echo "NVM sourced."
                     else
                         echo "ERROR: NVM script not found at $NVM_DIR/nvm.sh"
                         exit 1
                     fi
                     
-                    echo "Attempting to use Node.js LTS version..."
-                    nvm use --lts # THIS IS THE CRITICAL LINE to activate a version
-                    # You can also try: nvm install --lts && nvm use --lts
-                    # OR a specific version you installed: nvm use v18.17.0 (replace with actual installed version)
+                    echo "Ensuring Node.js LTS version is installed and used..."
+                    nvm install --lts # Ensures LTS is installed
+                    nvm use --lts     # Activates LTS for this shell session
                     
                     echo "Current Node version: $(node -v)"
                     echo "Current npm version: $(npm -v)"
@@ -78,20 +72,12 @@ pipeline {
 
         stage('Deploy Frontend') {
             steps {
-                 echo "Deploying frontend build to S3 and invalidating CloudFront..."
-                // This assumes EC2 Instance Role has S3 and CloudFront permissions.
-                // ** IMPORTANT FOR OAI (Origin Access Identity) with S3 **
-                // If your S3 bucket is private and uses OAI for CloudFront access (recommended),
-                // you should REMOVE the "--acl public-read" flag.
+                echo "Deploying frontend build to S3 and invalidating CloudFront..."
                 sh """
-                    echo "Syncing build to S3 bucket: s3://${env.S3_BUCKET_NAME}/"
                     aws s3 sync frontend/build/ s3://${env.S3_BUCKET_NAME}/ --delete
-                    
-                    echo "Invalidating CloudFront distribution: ${env.CLOUDFRONT_DISTRIBUTION_ID}"
                     aws cloudfront create-invalidation --distribution-id ${env.CLOUDFRONT_DISTRIBUTION_ID} --paths "/*"
                 """
-                // --- OR If using explicit AWS IAM User credentials stored in Jenkins ---
-                // Ensure 'AWS_CREDENTIALS_ID' is defined in environment and credentials exist in Jenkins.
+                // Optional: Use withCredentials if not relying on EC2 Instance Role
                 /*
                 withCredentials([aws(credentialsId: env.AWS_CREDENTIALS_ID, region: env.AWS_REGION)]) {
                     sh '''
@@ -105,41 +91,28 @@ pipeline {
 
         stage('Deploy Backend') {
             steps {
-                 sshagent([env.EC2_SSH_CREDENTIALS_ID]) { // Uses the Jenkins SSH credential for ec2-user
+                 sshagent([env.EC2_SSH_CREDENTIALS_ID]) {
                     sh """
-                        set -e # Exit immediately if a command exits with a non-zero status.
+                        set -e 
                         echo "Deploying backend on localhost as ec2-user..."
                         cd ${env.APP_DIR}
-
-                        # Jenkins typically checks out code to its workspace.
-                        # The commands below assume APP_DIR is where Jenkins checked out the code
-                        # or that you've synced it there.
 
                         echo "Activating virtual environment..."
                         source ${env.VENV_DIR}/bin/activate
 
                         echo "Installing/Updating backend dependencies..."
                         pip install -r requirements.txt
-                        # Ensure boto3 is available for settings.py SSM access
-                        pip install boto3 mysqlclient # Assuming MySQL
+                        pip install boto3 mysqlclient 
 
-                        echo "Collecting static files (for Django Admin)..."
+                        echo "Collecting static files..."
                         python manage.py collectstatic --noinput
 
                         echo "Running database migrations..."
                         python manage.py migrate --noinput
 
                         echo "Restarting Gunicorn via Supervisor..."
-                        # The Jenkins user (often 'jenkins') needs passwordless sudo permission
-                        # for this specific supervisorctl command.
-                        # Configure sudoers: 'jenkins ALL=(ALL) NOPASSWD: /usr/bin/supervisorctl restart hrms_gunicorn'
-                        # Or, if Supervisor is managed by systemd as supervisord.service:
-                        # 'jenkins ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart supervisord' (if restarting whole service)
-                        # Path to supervisorctl might be /usr/local/bin/supervisorctl if installed by pip.
                         sudo /usr/bin/supervisorctl restart hrms_gunicorn
 
-                        # Deactivate might not be strictly necessary here as the sh step will end
-                        # deactivate
                         echo "Backend deployment steps completed."
                     """
                  }
