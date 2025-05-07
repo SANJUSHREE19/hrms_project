@@ -37,16 +37,33 @@ pipeline {
                 sh '''
                     export NVM_DIR="$HOME/.nvm"
                     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-                    nvm use --lts # Or specify your Node.js version e.g., nvm use 18
+                    # Ensure you use a Node.js version compatible with your project
+                    nvm use --lts # Or specify your Node.js version e.g., nvm use 18 
 
-                    cd frontend
+                    cd frontend # Navigate into your frontend directory
                     echo "Installing frontend dependencies..."
-                    npm ci
+                    npm ci # 'ci' is recommended for CI environments for cleaner, faster, and more reliable installs
+
                     echo "Building production frontend..."
-                    # Pass Clerk Publishable Key as a build-time variable
-                    # Ensure this parameter exists in your Jenkins job configuration or define it elsewhere
-                    VITE_CLERK_PUBLISHABLE_KEY_PARAM="${VITE_CLERK_PUBLISHABLE_KEY_FROM_JENKINS_OR_SSM}"
-                    echo "VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY_PARAM}" > .env.production
+
+                    # Fetch Clerk Publishable Key from AWS SSM in us-east-1
+                    # This command will be executed by the Jenkins user on the EC2 instance.
+                    # Ensure the EC2 instance role has permission to get this parameter.
+                    CLERK_KEY=$(aws ssm get-parameter --name "/hrms/prod/clerk/publishable_key" --with-decryption --query "Parameter.Value" --output text --region us-east-1)
+                    
+                    # Check if the key was fetched successfully
+                    if [ -z "$CLERK_KEY" ]; then
+                        echo "ERROR: Failed to fetch VITE_CLERK_PUBLISHABLE_KEY from SSM in us-east-1."
+                        echo "Please check the parameter name, region, and EC2 instance role permissions."
+                        exit 1 # Exit the script with an error code, failing this stage
+                    fi
+                    
+                    # Create .env.production file with the fetched key for Vite to use
+                    echo "VITE_CLERK_PUBLISHABLE_KEY=${CLERK_KEY}" > .env.production 
+                    echo "Contents of .env.production:" # Log for debugging in Jenkins console
+                    cat .env.production 
+
+                    # Run the build command which should now use the .env.production file
                     npm run build
                 '''
             }
