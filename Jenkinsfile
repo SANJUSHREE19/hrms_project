@@ -29,35 +29,72 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 echo "Building React frontend..."
-                // Navigate to frontend directory and build
                 sh '''
-                    set -ex 
+                    set -ex # Ensure we see commands and exit on error
 
-                    export NVM_DIR="$HOME/.nvm" 
-                    echo "Checking for NVM script at $NVM_DIR/nvm.sh"
+                    export NVM_DIR="$HOME/.nvm"
+                    echo "NVM_DIR is set to: $NVM_DIR"
+
                     if [ -s "$NVM_DIR/nvm.sh" ]; then
-                      \\. "$NVM_DIR/nvm.sh"  
-                      echo "NVM sourced successfully."
+                        echo "Sourcing $NVM_DIR/nvm.sh..."
+                        . "$NVM_DIR/nvm.sh"  # Load NVM
+                        NVM_SOURCED_CODE=$?
+                        echo "NVM sourced, exit code: $NVM_SOURCED_CODE"
+                        if [ $NVM_SOURCED_CODE -ne 0 ]; then
+                            echo "ERROR: Failed to source NVM script."
+                            exit $NVM_SOURCED_CODE
+                        fi
                     else
-                      echo "ERROR: NVM script not found at $NVM_DIR/nvm.sh"
-                      exit 1
+                        echo "ERROR: NVM script not found at $NVM_DIR/nvm.sh"
+                        exit 1
+                    fi
+                    
+                    echo "Ensuring Node.js LTS version is installed..."
+                    nvm install --lts
+                    NVM_INSTALL_CODE=$?
+                    echo "nvm install --lts exit code: $NVM_INSTALL_CODE"
+                    if [ $NVM_INSTALL_CODE -ne 0 ]; then
+                        echo "ERROR: nvm install --lts failed with exit code $NVM_INSTALL_CODE"
+                        # Try to show more NVM debug info if possible
+                        nvm debug
+                        exit $NVM_INSTALL_CODE
                     fi
 
-                    echo "Ensuring Node LTS version is installed and used..."
-                    nvm install --lts 
+                    echo "Activating Node.js LTS version..."
                     nvm use --lts     
-                    nvm current       
+                    NVM_USE_CODE=$?
+                    echo "nvm use --lts exit code: $NVM_USE_CODE"
+                     if [ $NVM_USE_CODE -ne 0 ]; then
+                        echo "ERROR: nvm use --lts failed with exit code $NVM_USE_CODE"
+                        nvm debug
+                        exit $NVM_USE_CODE
+                    fi
+                    
+                    echo "VERIFYING PATH and Node versions after nvm use:"
+                    echo "PATH is: $PATH"
+                    command -v node
+                    command -v npm
+                    
+                    echo "Current Node version: $(node -v || echo 'node not found')"
+                    echo "Current npm version: $(npm -v || echo 'npm not found')"
 
-                    echo "Changing directory to frontend..."
-                    cd frontend
-
-                    echo "Installing frontend dependencies using npm ci..."
+                    cd frontend 
+                    echo "Installing frontend dependencies..."
                     npm ci 
 
                     echo "Building production frontend..."
-                    npm run build
+                    CLERK_KEY=$(aws ssm get-parameter --name "/hrms/prod/clerk/publishable_key" --with-decryption --query "Parameter.Value" --output text --region us-east-1)
+                    
+                    if [ -z "$CLERK_KEY" ]; then
+                        echo "ERROR: Failed to fetch VITE_CLERK_PUBLISHABLE_KEY from SSM in us-east-1."
+                        exit 1 
+                    fi
+                    
+                    echo "VITE_CLERK_PBLISHABLE_KEY=${CLERK_KEY}" > .env.production 
+                    echo "Contents of .env.production:" 
+                    cat .env.production 
 
-                    echo "Frontend build complete."
+                    npm run build
                 '''
             }
         }
