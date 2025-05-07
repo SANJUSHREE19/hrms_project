@@ -36,34 +36,41 @@ pipeline {
                 echo "Building React frontend..."
                 sh '''
                     export NVM_DIR="$HOME/.nvm"
-                    [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
-                    # Ensure you use a Node.js version compatible with your project
-                    nvm use --lts # Or specify your Node.js version e.g., nvm use 18 
+                    echo "NVM_DIR is set to: $NVM_DIR"
 
-                    cd frontend # Navigate into your frontend directory
-                    echo "Installing frontend dependencies..."
-                    npm ci # 'ci' is recommended for CI environments for cleaner, faster, and more reliable installs
-
-                    echo "Building production frontend..."
-
-                    # Fetch Clerk Publishable Key from AWS SSM in us-east-1
-                    # This command will be executed by the Jenkins user on the EC2 instance.
-                    # Ensure the EC2 instance role has permission to get this parameter.
-                    CLERK_KEY=$(aws ssm get-parameter --name "/hrms/prod/clerk/publishable_key" --with-decryption --query "Parameter.Value" --output text --region us-east-1)
-                    
-                    # Check if the key was fetched successfully
-                    if [ -z "$CLERK_KEY" ]; then
-                        echo "ERROR: Failed to fetch VITE_CLERK_PUBLISHABLE_KEY from SSM in us-east-1."
-                        echo "Please check the parameter name, region, and EC2 instance role permissions."
-                        exit 1 # Exit the script with an error code, failing this stage
+                    if [ -s "$NVM_DIR/nvm.sh" ]; then
+                        echo "Sourcing $NVM_DIR/nvm.sh..."
+                        . "$NVM_DIR/nvm.sh"  # This loads NVM. MUST be a dot, then a space, then the path.
+                        echo "NVM sourced."
+                    else
+                        echo "ERROR: NVM script not found at $NVM_DIR/nvm.sh"
+                        exit 1
                     fi
                     
-                    # Create .env.production file with the fetched key for Vite to use
+                    echo "Attempting to use Node.js LTS version..."
+                    nvm use --lts # THIS IS THE CRITICAL LINE to activate a version
+                    # You can also try: nvm install --lts && nvm use --lts
+                    # OR a specific version you installed: nvm use v18.17.0 (replace with actual installed version)
+                    
+                    echo "Current Node version: $(node -v)"
+                    echo "Current npm version: $(npm -v)"
+
+                    cd frontend 
+                    echo "Installing frontend dependencies..."
+                    npm ci 
+
+                    echo "Building production frontend..."
+                    CLERK_KEY=$(aws ssm get-parameter --name "/hrms/prod/clerk/publishable_key" --with-decryption --query "Parameter.Value" --output text --region us-east-1)
+                    
+                    if [ -z "$CLERK_KEY" ]; then
+                        echo "ERROR: Failed to fetch VITE_CLERK_PUBLISHABLE_KEY from SSM in us-east-1."
+                        exit 1 
+                    fi
+                    
                     echo "VITE_CLERK_PUBLISHABLE_KEY=${CLERK_KEY}" > .env.production 
-                    echo "Contents of .env.production:" # Log for debugging in Jenkins console
+                    echo "Contents of .env.production:" 
                     cat .env.production 
 
-                    # Run the build command which should now use the .env.production file
                     npm run build
                 '''
             }
