@@ -30,33 +30,37 @@ pipeline {
             steps {
                 echo "Building React frontend..."
                 sh '''
-                    set -ex # Ensure we see commands and exit on error
+                    # We will manage exit explicitly around NVM setup first, then re-enable set -e if needed.
+                    # set -ex 
 
                     export NVM_DIR="$HOME/.nvm"
                     echo "NVM_DIR is set to: $NVM_DIR"
 
+                    # Try to prevent nvm from auto-running 'use' during sourcing
+                    export NVM_AUTO_USE=false 
+
                     if [ -s "$NVM_DIR/nvm.sh" ]; then
                         echo "Sourcing $NVM_DIR/nvm.sh..."
                         . "$NVM_DIR/nvm.sh"  # Load NVM
-                        NVM_SOURCED_CODE=$?
-                        echo "NVM sourced, exit code: $NVM_SOURCED_CODE"
-                        if [ $NVM_SOURCED_CODE -ne 0 ]; then
-                            echo "ERROR: Failed to source NVM script."
-                            exit $NVM_SOURCED_CODE
-                        fi
+                        NVM_SOURCED_CODE=$? # Capture exit code
+                        echo "NVM sourced, exit code from sourcing: $NVM_SOURCED_CODE"
+                        # Do NOT exit here even if nvm.sh sourcing returns non-zero, 
+                        # as we will immediately try to use a specific version.
+                        # The non-zero exit might be from its internal "auto use" failing.
                     else
                         echo "ERROR: NVM script not found at $NVM_DIR/nvm.sh"
                         exit 1
                     fi
                     
+                    # Now that NVM is sourced (even if sourcing had an internal non-fatal exit), 
+                    # we explicitly tell it what to do.
                     echo "Ensuring Node.js LTS version is installed..."
                     nvm install --lts
                     NVM_INSTALL_CODE=$?
                     echo "nvm install --lts exit code: $NVM_INSTALL_CODE"
                     if [ $NVM_INSTALL_CODE -ne 0 ]; then
                         echo "ERROR: nvm install --lts failed with exit code $NVM_INSTALL_CODE"
-                        # Try to show more NVM debug info if possible
-                        nvm debug
+                        nvm debug || echo "nvm debug command also failed or not available"
                         exit $NVM_INSTALL_CODE
                     fi
 
@@ -64,19 +68,25 @@ pipeline {
                     nvm use --lts     
                     NVM_USE_CODE=$?
                     echo "nvm use --lts exit code: $NVM_USE_CODE"
-                     if [ $NVM_USE_CODE -ne 0 ]; then
+                    if [ $NVM_USE_CODE -ne 0 ]; then
                         echo "ERROR: nvm use --lts failed with exit code $NVM_USE_CODE"
-                        nvm debug
+                        nvm debug || echo "nvm debug command also failed or not available"
                         exit $NVM_USE_CODE
                     fi
                     
                     echo "VERIFYING PATH and Node versions after nvm use:"
                     echo "PATH is: $PATH"
-                    command -v node
-                    command -v npm
+                    # Make sure node/npm are executable
+                    if ! command -v node > /dev/null || ! command -v npm > /dev/null; then
+                        echo "ERROR: node or npm not found in PATH after nvm use."
+                        exit 1
+                    fi
                     
-                    echo "Current Node version: $(node -v || echo 'node not found')"
-                    echo "Current npm version: $(npm -v || echo 'npm not found')"
+                    echo "Current Node version: $(node -v)"
+                    echo "Current npm version: $(npm -v)"
+                    
+                    # Re-enable strict error checking from here if desired
+                    set -e
 
                     cd frontend 
                     echo "Installing frontend dependencies..."
@@ -90,7 +100,7 @@ pipeline {
                         exit 1 
                     fi
                     
-                    echo "VITE_CLERK_PBLISHABLE_KEY=${CLERK_KEY}" > .env.production 
+                    echo "VITE_CLERK_PUBLISHABLE_KEY=${CLERK_KEY}" > .env.production # Corrected variable name
                     echo "Contents of .env.production:" 
                     cat .env.production 
 
