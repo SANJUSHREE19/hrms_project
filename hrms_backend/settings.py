@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Assumes EC2 instance has role with SSM GetParameter permissions
 try:
     # MODIFIED: Specify your region
-    ssm = boto3.client('ssm', region_name='us-east-2')
+    ssm = boto3.client('ssm', region_name='us-east-1')
 
     def get_ssm_parameter(name, default=None):
         try:
