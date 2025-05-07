@@ -5,7 +5,7 @@ import time
 from functools import wraps
 from jose import jwt # Using python-jose which handles jwk well
 from jose.exceptions import JOSEError, JWTError
-from werkzeug.contrib.cache import SimpleCache # For caching JWKs
+from django.core.cache import cache  # Use Django's cache instead of SimpleCache
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework import status
@@ -15,9 +15,6 @@ from .models import User, EmployeeProfile
 
 
 load_dotenv()
-
-# --- JWK Caching Setup ---
-cache = SimpleCache(threshold=500, default_timeout=300) # Cache up to 500 items, default 5 mins timeout
 
 # --- Clerk Settings ---
 # Derive issuer and JWKS URL from your Clerk Publishable Key or Frontend API Key if possible

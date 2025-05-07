@@ -60,12 +60,21 @@ except Exception as e:
     print(f"CRITICAL: Could not initialize settings from SSM. Error: {e}")
     # Define minimal fallbacks or raise an exception
     # Fallback (INSECURE - replace or ensure parameters are fetched)
-    SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'insecure-fallback-key-if-ssm-fails')
+    SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'default_secret_key') # <-- Change this to a secure default or raise an error
+    CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY', 'default_clerk_secret_key') # <-- Change this to a secure default or raise an error
+    CLERK_PUBLISHABLE_KEY = os.getenv('VITE_CLERK_PUBLISHABLE_KEY', 'default_clerk_publishable_key') # <-- Change this to a secure default or raise an error
+    CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL', 'https://your-clerk-issuer-url.com') # <-- Change this to a secure default or raise an error
+    CLERK_JWKS_URL_DEFAULT_DERIVED = f"{CLERK_ISSUER_URL}/.well-known/jwks.json" if CLERK_ISSUER_URL else None
+    CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', CLERK_JWKS_URL_DEFAULT_DERIVED) # <-- Change this to a secure default or raise an error
     DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1']
     # MODIFIED: Fallback ALLOWED_HOSTS to include EC2 details if SSM fails catastrophically
     ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'ec2-54-165-184-90.compute-1.amazonaws.com', '54.165.184.90']
+    DB_NAME = os.getenv('DB_NAME', 'test_db')         # <-- Add this
+    DB_USER = os.getenv('DB_USER', 'test_user')       # <-- Add this
+    DB_PASSWORD = os.getenv('DB_PASSWORD', 'test_pw') # <-- Add this
     DB_HOST = os.getenv('DB_HOST', 'localhost')
-    # ... set other defaults carefully ...
+    DB_PORT = os.getenv('DB_PORT', '3306')
+    
 
 # CSRF Trusted Origins (Needed if Frontend/Backend on different domains)
 # MODIFIED: Replace with your actual CloudFront domain name
@@ -102,7 +111,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'hrms_project.urls' # Assuming your project name is hrms_project
+ROOT_URLCONF = 'hrms_backend.urls'
 
 TEMPLATES = [
     {
@@ -120,7 +129,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'hrms_project.wsgi.application' # Assuming your project name is hrms_project
+WSGI_APPLICATION = 'hrms_backend.wsgi.application'
 
 # Database settings (Use variables populated from SSM/env)
 DATABASES = {
