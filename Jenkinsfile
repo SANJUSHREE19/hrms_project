@@ -59,11 +59,12 @@ pipeline {
                         exit 1 
                     fi
                     
-                    echo "VITE_CLERK_PUBLISHABLE_KEY=${CLERK_KEY}" > .env.production 
+                    # CHANGE HERE: Use REACT_APP_ prefix for Create React App
+                    echo "REACT_APP_CLERK_PUBLISHABLE_KEY=${CLERK_KEY}" > .env.production 
                     echo "Contents of .env.production:" 
                     cat .env.production 
 
-                    npm run build
+                    npm run build # This runs 'react-scripts build'
                 '''
             }
         }
