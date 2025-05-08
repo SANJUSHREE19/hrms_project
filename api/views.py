@@ -31,8 +31,8 @@ from .serializers import (
 @permission_classes([AllowAny]) # Assumes webhook verification will be added for production
 def sync_clerk_user(request):
     data = request.data.get('data')
+    print(f"Received data: {data}")
     event_type = request.data.get('type')
-
     if not data:
         return Response({"error": "Invalid payload"}, status=status.HTTP_400_BAD_REQUEST)
 

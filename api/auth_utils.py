@@ -11,11 +11,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from dotenv import load_dotenv
 from django.conf import settings
+import logging
 
 from .models import User, EmployeeProfile
 
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 # --- Clerk Settings ---
 CLERK_PUBLISHABLE_KEY = settings.CLERK_PUBLISHABLE_KEY
@@ -127,7 +129,7 @@ class HasClerkRole(BasePermission):
 
             # === START JIT Provisioning Block ===
             except User.DoesNotExist:
-                print(f"INFO: User {clerk_user_id} not found locally. Attempting JIT provisioning.")
+                logger.info(f"User {clerk_user_id} not found locally. Attempting JIT provisioning.")
                 try:
                     # Extract details needed for creation from verified token
                     email = session_claims.get('email')
@@ -137,7 +139,7 @@ class HasClerkRole(BasePermission):
                     if not email:
                         # Cannot create user without email
                         self.message = 'Forbidden: Cannot create user profile, missing email claim in token.'
-                        print(f"ERROR: JIT failed for {clerk_user_id} - Missing email claim. Available: {list(session_claims.keys())}")
+                        logger.error(f"JIT failed for {clerk_user_id} - Missing email claim. Available: {list(session_claims.keys())}")
                         return False # Fail permission check
 
                     # Create the local User record
@@ -149,20 +151,20 @@ class HasClerkRole(BasePermission):
                         role='employee',  # Assign default role
                         is_active=True
                     )
-                    print(f"INFO: Created new local user {user.email} via JIT.")
+                    logger.info(f"Created new local user {user.email} via JIT.")
 
                     # Create the associated EmployeeProfile record
                     EmployeeProfile.objects.create(
                         user=user,
                         job_title='Pending Assignment'
                     )
-                    print(f"INFO: Created EmployeeProfile for {user.email} via JIT.")
+                    logger.info(f"Created EmployeeProfile for {user.email} via JIT.")
 
                     # User is now created, continue to role check with this new 'user' object
 
                 except Exception as jit_e:
                     # Catch potential errors during DB creation
-                    print(f"ERROR: Failed JIT database provisioning for {clerk_user_id}: {jit_e}")
+                    logger.error(f"Failed JIT database provisioning for {clerk_user_id}: {jit_e}", exc_info=True)
                     self.message = 'Internal Server Error: Could not provision user profile during login.'
                     return False # Fail permission check if JIT DB operation fails
             # === END JIT Provisioning Block ===
