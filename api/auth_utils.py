@@ -18,7 +18,7 @@ from .models import User, EmployeeProfile
 load_dotenv()
 
 # --- Clerk Settings ---
-CLERK_PUBLISHABLE_KEY = settings.VITE_CLERK_PUBLISHABLE_KEY
+CLERK_PUBLISHABLE_KEY = settings.CLERK_PUBLISHABLE_KEY
 CLERK_SECRET_KEY = settings.CLERK_SECRET_KEY
 
 if not CLERK_PUBLISHABLE_KEY:
