@@ -29,8 +29,6 @@ pipeline {
                 cleanWs() 
             }
         }
-    }
-    stages {
         stage('Checkout') {
             steps {
                 echo "Checking out code from GitHub..."
