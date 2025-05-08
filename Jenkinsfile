@@ -42,8 +42,8 @@ pipeline {
                     npm -v
 
                     cd frontend 
-                    # echo "Installing frontend dependencies..."
-                    # npm ci 
+                    echo "Installing frontend dependencies..."
+                    npm ci 
 
                     echo "Building production frontend..."
                     CLERK_KEY=$(aws ssm get-parameter --name "/hrms/prod/clerk/publishable_key" --with-decryption --query "Parameter.Value" --output text --region us-east-1)
