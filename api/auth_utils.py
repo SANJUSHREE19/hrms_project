@@ -10,6 +10,7 @@ from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework import status
 from dotenv import load_dotenv
+from django.conf import settings
 
 from .models import User, EmployeeProfile
 
@@ -17,18 +18,16 @@ from .models import User, EmployeeProfile
 load_dotenv()
 
 # --- Clerk Settings ---
-# Derive issuer and JWKS URL from your Clerk Publishable Key or Frontend API Key if possible
-# Or find them in your Clerk Dashboard -> API Keys -> Advanced -> Issuer URL
-CLERK_PUBLISHABLE_KEY = os.getenv('VITE_CLERK_PUBLISHABLE_KEY') # From the initial frontend .env example
-CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY') # Keep this, might be needed for Backend API calls later
+CLERK_PUBLISHABLE_KEY = settings.VITE_CLERK_PUBLISHABLE_KEY
+CLERK_SECRET_KEY = settings.CLERK_SECRET_KEY
 
 if not CLERK_PUBLISHABLE_KEY:
     raise ValueError("Clerk Publishable Key not found in environment variables (used to derive domain)")
 
 # Extract the core domain part (e.g., dazzling-lemming-12.clerk.accounts.dev)
 try:
-    CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL')
-    CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL')
+    CLERK_ISSUER_URL = settings.CLERK_ISSUER_URL
+    CLERK_JWKS_URL = settings.CLERK_JWKS_URL
 except IndexError:
     raise ValueError("Could not derive Clerk domain from Publishable Key. Set CLERK_ISSUER_URL manually.")
 
