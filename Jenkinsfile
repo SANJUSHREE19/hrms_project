@@ -95,6 +95,9 @@ pipeline {
                         echo "Deploying backend on localhost as ec2-user..."
                         cd ${env.APP_DIR}
 
+                        echo "Ensuring ownership of ${APP_DIR} for ec2-user..."
+                        sudo chown -R ec2-user:ec2-user ${APP_DIR}
+
                         echo "Activating virtual environment..."
                         source ${env.VENV_DIR}/bin/activate
 
