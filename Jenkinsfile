@@ -90,66 +90,70 @@ pipeline {
 
         stage('Deploy Backend') {
             steps {
-                 sshagent([env.EC2_SSH_CREDENTIALS_ID]) {
-                    // CHANGE HERE: Use triple single quotes
-                    sh '''                      
-                        set -e 
-                        echo "--- Deploy Backend Stage Start ---"
-                        echo "Running as user: $(whoami)" 
-                        
-                        echo "Deploying backend on localhost as $(whoami)..."
-                        cd ${env.APP_DIR}
+                // Use sshagent to wrap an SSH command executed as ec2-user
+                sshagent([env.EC2_SSH_CREDENTIALS_ID]) {
+                    // Execute the deployment script via SSH to localhost as ec2-user
+                    sh '''
+                      set -ex 
+                      ssh -o StrictHostKeyChecking=no ec2-user@localhost << 'DEPLOY_SCRIPT'
+                      
+                      echo "--- Running Deployment on localhost via SSH as: $(whoami) ---"
+                      # Now we are running as ec2-user inside the remote shell
+                      
+                      # Define variables for clarity WITHIN this shell script
+                      APP_DIR="/home/ec2-user/hrms_project" # Or read from an injected env var if preferred
+                      VENV_DIR="${APP_DIR}/env"
+                      SUPERVISORCTL_PATH="/usr/local/bin/supervisorctl" # Correct path
+                      SUPERVISORD_PATH="/usr/local/bin/supervisord"
+                      SUPERVISORD_CONF="/etc/supervisord.conf"
+                      CHOWN_PATH="/usr/bin/chown" # Correct path
 
-                        echo "Ensuring ownership of ${env.APP_DIR} for $(whoami)..."
-                        # NOTE: Because of NOPASSWD: ALL, we don't strictly NEED sudo -n check, 
-                        # but leave it for now or revert to simpler sudo command
-                        sudo -n /usr/bin/chown -R $(whoami):$(whoami) ${env.APP_DIR} 
-                        CHOWN_EXIT_CODE=$? # Use $? for shell exit code
-                        echo "chown command exit code: $CHOWN_EXIT_CODE"
-                        if [ $CHOWN_EXIT_CODE -ne 0 ]; then
-                             echo "ERROR: chown failed"
-                             exit $CHOWN_EXIT_CODE
-                        fi
+                      echo "Current Directory: $(pwd)"
+                      echo "Changing to APP_DIR: ${APP_DIR}"
+                      cd "${APP_DIR}" || { echo "Failed to cd to ${APP_DIR}"; exit 1; }
 
-                        echo "Activating virtual environment..."
-                        # IMPORTANT: Access Jenkins env vars with ${env.VAR_NAME} here
-                        source ${env.VENV_DIR}/bin/activate 
+                      echo "Ensuring ownership of ${APP_DIR} for $(whoami)..."
+                      # Need sudo rights configured for ec2-user (as verified previously)
+                      sudo "${CHOWN_PATH}" -R $(whoami):$(whoami) "${APP_DIR}"
 
-                        # Ensure staticfiles directory exists using the environment variable
-                        echo "Ensuring static root directory exists: ${env.APP_DIR}/staticfiles"
-                        mkdir -p "${env.APP_DIR}/staticfiles" 
-                        chown $(whoami):$(whoami) "${env.APP_DIR}/staticfiles" 
+                      echo "Ensuring socket directory exists: ${APP_DIR}/run"
+                      mkdir -p "${APP_DIR}/run"
+                      # chown should not be needed here if parent is owned correctly
+                      
+                      echo "Activating virtual environment: ${VENV_DIR}/bin/activate"
+                      source "${VENV_DIR}/bin/activate" || { echo "Failed to activate venv"; exit 1; }
 
-                        echo "Installing/Updating backend dependencies..."
-                        pip install -r requirements.txt
-                        pip install boto3 mysqlclient 
+                      STATIC_ROOT_DIR="${APP_DIR}/staticfiles"
+                      echo "Ensuring static root directory exists: ${STATIC_ROOT_DIR}"
+                      mkdir -p "${STATIC_ROOT_DIR}" 
+                      # chown should not be needed here
 
-                        echo "Collecting static files..."
-                        python manage.py collectstatic --noinput
+                      echo "Installing/Updating backend dependencies..."
+                      pip install -r requirements.txt
+                      pip install boto3 mysqlclient 
 
-                        echo "Running database migrations..."
-                        python manage.py migrate --noinput
+                      echo "Collecting static files..."
+                      python manage.py collectstatic --noinput
 
-                        echo "Ensuring supervisord is running..."
-                        sudo /usr/local/bin/supervisord -c /etc/supervisord.conf || echo "Supervisord running or failed (check logs)"
+                      echo "Running database migrations..."
+                      python manage.py migrate --noinput
 
-                        echo "Restarting Gunicorn via Supervisor..."
-                         # NOTE: Because of NOPASSWD: ALL, we don't strictly NEED sudo -n check, 
-                        # but leave it for now or revert to simpler sudo command
-                       sudo -n /usr/local/bin/supervisorctl -c /etc/supervisord.conf restart hrms_gunicorn
-                        SUPERVISORCTL_EXIT_CODE=$? # Use $? for shell exit code
-                         echo "supervisorctl command exit code: $SUPERVISORCTL_EXIT_CODE"
-                        if [ $SUPERVISORCTL_EXIT_CODE -ne 0 ]; then
-                             echo "ERROR: supervisorctl command failed"
-                             exit $SUPERVISORCTL_EXIT_CODE
-                        fi
+                      echo "Ensuring supervisord is running..."
+                      sudo "${SUPERVISORD_PATH}" -c "${SUPERVISORD_CONF}" || echo "Supervisord possibly already running or failed (check logs)"
 
-                        echo "Backend deployment steps completed."
-                    # CHANGE HERE: Closing triple single quotes
-                    '''                      
-                 }
-            }
-        }
+                      echo "Restarting Gunicorn via Supervisor..."
+                      # Need sudo rights configured for ec2-user (as verified previously)
+                      sudo "${SUPERVISORCTL_PATH}" -c "${SUPERVISORD_CONF}" restart hrms_gunicorn
+
+                      echo "--- Backend deployment script finished ---"
+
+                      # Exiting the SSH heredoc
+                      exit 0 
+                      DEPLOY_SCRIPT
+                    ''' // End of the main sh block wrapping the ssh command
+                 } // End of sshagent block
+            } // End of steps
+        } // End of stage
     }
 
     post {
