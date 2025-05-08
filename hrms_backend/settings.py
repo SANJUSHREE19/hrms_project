@@ -221,7 +221,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / '../logs/django.log', # Path relative to BASE_DIR's parent
+            'filename': BASE_DIR / 'logs/django.log', # Path relative to BASE_DIR's parent
              'formatter': 'verbose',
         },
     },
@@ -253,6 +253,6 @@ LOGGING = {
     },
 }
 # Create logs directory if it doesn't exist
-LOG_DIR = BASE_DIR / '../logs'
+LOG_DIR = BASE_DIR / 'logs'
 if not LOG_DIR.exists():
      os.makedirs(LOG_DIR, exist_ok=True) # Added exist_ok=True
