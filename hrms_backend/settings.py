@@ -8,6 +8,9 @@ load_dotenv() # Keep loading from .env for local dev, override below
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+LOG_FILE_PATH_DEBUG = BASE_DIR / 'logs/django.log'
+print(f"DEBUG: settings.py -> Calculated log file path: {LOG_FILE_PATH_DEBUG.resolve()}") 
+
 # --- Fetch Secrets from AWS Parameter Store ---
 # Assumes EC2 instance has role with SSM GetParameter permissions
 try:
@@ -255,4 +258,9 @@ LOGGING = {
 # Create logs directory if it doesn't exist
 LOG_DIR = BASE_DIR / 'logs'
 if not LOG_DIR.exists():
-     os.makedirs(LOG_DIR, exist_ok=True) # Added exist_ok=True
+    print(f"DEBUG: Creating logs directory: {LOG_DIR.resolve()}") # Add print here too
+    try:
+        os.makedirs(LOG_DIR, exist_ok=True)
+        print(f"DEBUG: Successfully attempted mkdir for {LOG_DIR.resolve()}")
+    except Exception as e:
+        print(f"DEBUG: ERROR creating log directory {LOG_DIR.resolve()}: {e}")
