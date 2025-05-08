@@ -1,9 +1,8 @@
 // src/components/MainLayout.js
 import React from 'react';
-import { Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom';
-import { SignedIn, SignedOut, UserButton, useUser, useAuth } from '@clerk/clerk-react'; // Keep necessary Clerk imports
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
+import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react'; // Keep necessary Clerk imports
 import { useUserProfile } from '../contexts/UserProfileContext'; // Import hook
-import UserProfileFetcher from './UserProfileFetcher'; // Keep fetcher
 import MyPaystubsPage from '../pages/MyPaystubsPage';
 
 // Import Pages and ProtectedRoute

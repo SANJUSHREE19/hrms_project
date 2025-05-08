@@ -9,7 +9,7 @@ function EmployeeManagement() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [deptFilter, setDeptFilter] = useState(''); // Add filters later if needed
+    const [deptFilter] = useState(''); // Add filters later if needed
     const { getToken } = useAuth();
 
     // Function to fetch employees

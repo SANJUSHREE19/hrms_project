@@ -1,6 +1,6 @@
 // src/components/hr/PayRunStubsViewer.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import { getAuthenticatedInstance } from '../../api/axiosInstance';
 import { format } from 'date-fns'; // Optional: For formatting created_at

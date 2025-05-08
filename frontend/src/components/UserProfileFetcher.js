@@ -1,5 +1,4 @@
 // src/components/UserProfileFetcher.js
-import { useEffect } from 'react';
 import { useUserProfile } from '../contexts/UserProfileContext';
 
 // This component just exists to trigger the context logic when rendered within SignedIn
