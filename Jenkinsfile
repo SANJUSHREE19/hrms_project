@@ -22,7 +22,13 @@ pipeline {
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }
-
+    stages {
+        stage('Cleanup') { // Optional but good practice stage
+            steps {
+                echo "Cleaning workspace..."
+                cleanWs() 
+            }
+        }
     stages {
         stage('Checkout') {
             steps {
