@@ -42,8 +42,8 @@ pipeline {
                     npm -v
 
                     cd frontend 
-                    echo "Installing frontend dependencies..."
-                    npm ci 
+                    # echo "Installing frontend dependencies..."
+                    # npm ci 
 
                     echo "Building production frontend..."
                     CLERK_KEY=$(aws ssm get-parameter --name "/hrms/prod/clerk/publishable_key" --with-decryption --query "Parameter.Value" --output text --region us-east-1)
@@ -93,8 +93,8 @@ pipeline {
                         echo "Activating virtual environment..."
                         source ${env.VENV_DIR}/bin/activate
 
-                        echo "Installing/Updating backend dependencies..."
-                        pip install -r requirements.txt
+                        # echo "Installing/Updating backend dependencies..."
+                        # pip install -r requirements.txt
 
                         echo "Collecting static files..."
                         python manage.py collectstatic --noinput
