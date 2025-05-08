@@ -93,27 +93,37 @@ pipeline {
                  sshagent([env.EC2_SSH_CREDENTIALS_ID]) {
                     sh """
                         set -e 
-                        echo "Deploying backend on localhost as ec2-user..."
+                        echo "--- Deploy Backend Stage Start ---"
+                        echo "Running as user: $(whoami)" # Verify user
+                        
+                        echo "Deploying backend on localhost as $(whoami)..."
                         cd ${env.APP_DIR}
 
-                        echo "Ensuring ownership of ${APP_DIR} for ec2-user..."
-                        sudo chown -R ec2-user:ec2-user ${APP_DIR}
+                        echo "Ensuring ownership of ${env.APP_DIR} for $(whoami)..."
+                        echo "Running command: sudo /usr/bin/chown -R $(whoami):$(whoami) ${env.APP_DIR}"
+                        # Use -n flag for non-interactive test
+                        sudo -n /usr/bin/chown -R $(whoami):$(whoami) ${env.APP_DIR} 
+                        CHOWN_EXIT_CODE=$?
+                        echo "chown command exit code: $CHOWN_EXIT_CODE"
+                        # If -n failed, try without -n ONLY FOR DEBUG, likely to hang or fail same way
+                        # if [ $CHOWN_EXIT_CODE -ne 0 ]; then
+                        #    echo "sudo -n failed, trying without -n (may hang)..."
+                        #    sudo /usr/bin/chown -R $(whoami):$(whoami) ${env.APP_DIR} 
+                        # fi
 
-                        # Ensure the 'run' directory for the socket exists
-                        echo "Ensuring socket directory exists: ${APP_DIR}/run"
-                        mkdir -p "${APP_DIR}/run"
-                        chown ec2-user:ec2-user "${APP_DIR}/run" 
+                        # --- REST OF SCRIPT (only runs if chown succeeds) ---
 
                         echo "Activating virtual environment..."
                         source ${env.VENV_DIR}/bin/activate
 
-                        # Ensure staticfiles directory exists using the environment variable
-                        echo "Ensuring static root directory exists: ${env.STATIC_ROOT_DIR_GROOVY}"
-                        mkdir -p "${env.STATIC_ROOT_DIR_GROOVY}" 
-                        chown ec2-user:ec2-user "${env.STATIC_ROOT_DIR_GROOVY}" 
+                        STATIC_ROOT_DIR="${env.APP_DIR}/staticfiles"
+                        echo "Ensuring static root directory exists: ${STATIC_ROOT_DIR}"
+                        mkdir -p "${STATIC_ROOT_DIR}" 
+                        chown $(whoami):$(whoami) "${STATIC_ROOT_DIR}" 
 
                         echo "Installing/Updating backend dependencies..."
                         pip install -r requirements.txt
+                        pip install boto3 mysqlclient 
 
                         echo "Collecting static files..."
                         python manage.py collectstatic --noinput
@@ -125,7 +135,16 @@ pipeline {
                         sudo /usr/local/bin/supervisord -c /etc/supervisord.conf || echo "Supervisord running or failed (check logs)"
 
                         echo "Restarting Gunicorn via Supervisor..."
-                        sudo /usr/local/bin/supervisorctl -c /etc/supervisord.conf restart hrms_gunicorn
+                        echo "Running command: sudo /usr/local/bin/supervisorctl -c /etc/supervisord.conf restart hrms_gunicorn"
+                        sudo -n /usr/local/bin/supervisorctl -c /etc/supervisord.conf restart hrms_gunicorn
+                        SUPERVISORCTL_EXIT_CODE=$?
+                         echo "supervisorctl command exit code: $SUPERVISORCTL_EXIT_CODE"
+                        if [ $SUPERVISORCTL_EXIT_CODE -ne 0 ]; then
+                             echo "ERROR: supervisorctl command failed"
+                             # Optionally try without -n
+                             # sudo /usr/local/bin/supervisorctl -c /etc/supervisord.conf restart hrms_gunicorn
+                             exit $SUPERVISORCTL_EXIT_CODE
+                        fi
 
                         echo "Backend deployment steps completed."
                     """
