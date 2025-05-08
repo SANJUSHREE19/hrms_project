@@ -95,6 +95,8 @@ pipeline {
                         echo "Deploying backend on localhost as ec2-user..."
                         cd ${env.APP_DIR}
 
+                        sudo rm -rf ${env.APP_DIR}/staticfiles
+
                         echo "Activating virtual environment..."
                         source ${env.VENV_DIR}/bin/activate
 
