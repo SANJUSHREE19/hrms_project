@@ -10,6 +10,7 @@ pipeline {
         VENV_DIR                   = "${APP_DIR}/env"
         CLOUDFRONT_DISTRIBUTION_ID = 'E30K56N2AOR96V'
         S3_BUCKET_NAME             = 'hrms-frontend-s3-bucket-name'
+        STATIC_ROOT_DIR_GROOVY     = "${APP_DIR}/staticfiles"
         // AWS_CREDENTIALS_ID      = 'aws-jenkins-hrms-user' // Uncomment if using specific IAM User for AWS CLI
     }
 
@@ -106,11 +107,10 @@ pipeline {
                         echo "Activating virtual environment..."
                         source ${env.VENV_DIR}/bin/activate
 
-                        # Ensure staticfiles directory exists... (keep this)
-                        STATIC_ROOT_DIR="${APP_DIR}/staticfiles"
-                        echo "Ensuring static root directory exists: ${STATIC_ROOT_DIR}"
-                        mkdir -p "${STATIC_ROOT_DIR}" 
-                        chown ec2-user:ec2-user "${STATIC_ROOT_DIR}" 
+                        # Ensure staticfiles directory exists using the environment variable
+                        echo "Ensuring static root directory exists: ${env.STATIC_ROOT_DIR_GROOVY}"
+                        mkdir -p "${env.STATIC_ROOT_DIR_GROOVY}" 
+                        chown ec2-user:ec2-user "${env.STATIC_ROOT_DIR_GROOVY}" 
 
                         echo "Installing/Updating backend dependencies..."
                         pip install -r requirements.txt
