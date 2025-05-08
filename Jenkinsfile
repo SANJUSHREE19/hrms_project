@@ -95,13 +95,25 @@ pipeline {
                         echo "Deploying backend on localhost as ec2-user..."
                         cd ${env.APP_DIR}
 
-                        sudo rm -rf ${env.APP_DIR}/staticfiles
+                        echo "Ensuring ownership of ${APP_DIR} for ec2-user..."
+                        sudo chown -R ec2-user:ec2-user ${APP_DIR}
+
+                        # Ensure the 'run' directory for the socket exists
+                        echo "Ensuring socket directory exists: ${APP_DIR}/run"
+                        mkdir -p "${APP_DIR}/run"
+                        chown ec2-user:ec2-user "${APP_DIR}/run" 
 
                         echo "Activating virtual environment..."
                         source ${env.VENV_DIR}/bin/activate
 
-                        # echo "Installing/Updating backend dependencies..."
-                        # pip install -r requirements.txt
+                        # Ensure staticfiles directory exists... (keep this)
+                        STATIC_ROOT_DIR="${APP_DIR}/staticfiles"
+                        echo "Ensuring static root directory exists: ${STATIC_ROOT_DIR}"
+                        mkdir -p "${STATIC_ROOT_DIR}" 
+                        chown ec2-user:ec2-user "${STATIC_ROOT_DIR}" 
+
+                        echo "Installing/Updating backend dependencies..."
+                        pip install -r requirements.txt
 
                         echo "Collecting static files..."
                         python manage.py collectstatic --noinput
@@ -109,8 +121,11 @@ pipeline {
                         echo "Running database migrations..."
                         python manage.py migrate --noinput
 
+                        echo "Ensuring supervisord is running..."
+                        sudo /usr/local/bin/supervisord -c /etc/supervisord.conf || echo "Supervisord running or failed (check logs)"
+
                         echo "Restarting Gunicorn via Supervisor..."
-                        sudo /usr/bin/supervisorctl restart hrms_gunicorn
+                        sudo /usr/local/bin/supervisorctl -c /etc/supervisord.conf restart hrms_gunicorn
 
                         echo "Backend deployment steps completed."
                     """
