@@ -91,35 +91,34 @@ pipeline {
         stage('Deploy Backend') {
             steps {
                  sshagent([env.EC2_SSH_CREDENTIALS_ID]) {
-                    sh """
+                    // CHANGE HERE: Use triple single quotes
+                    sh '''                      
                         set -e 
                         echo "--- Deploy Backend Stage Start ---"
-                        echo "Running as user: $(whoami)" # Verify user
+                        echo "Running as user: $(whoami)" 
                         
                         echo "Deploying backend on localhost as $(whoami)..."
                         cd ${env.APP_DIR}
 
                         echo "Ensuring ownership of ${env.APP_DIR} for $(whoami)..."
-                        echo "Running command: sudo /usr/bin/chown -R $(whoami):$(whoami) ${env.APP_DIR}"
-                        # Use -n flag for non-interactive test
+                        # NOTE: Because of NOPASSWD: ALL, we don't strictly NEED sudo -n check, 
+                        # but leave it for now or revert to simpler sudo command
                         sudo -n /usr/bin/chown -R $(whoami):$(whoami) ${env.APP_DIR} 
-                        CHOWN_EXIT_CODE=$?
+                        CHOWN_EXIT_CODE=$? # Use $? for shell exit code
                         echo "chown command exit code: $CHOWN_EXIT_CODE"
-                        # If -n failed, try without -n ONLY FOR DEBUG, likely to hang or fail same way
-                        # if [ $CHOWN_EXIT_CODE -ne 0 ]; then
-                        #    echo "sudo -n failed, trying without -n (may hang)..."
-                        #    sudo /usr/bin/chown -R $(whoami):$(whoami) ${env.APP_DIR} 
-                        # fi
-
-                        # --- REST OF SCRIPT (only runs if chown succeeds) ---
+                        if [ $CHOWN_EXIT_CODE -ne 0 ]; then
+                             echo "ERROR: chown failed"
+                             exit $CHOWN_EXIT_CODE
+                        fi
 
                         echo "Activating virtual environment..."
-                        source ${env.VENV_DIR}/bin/activate
+                        # IMPORTANT: Access Jenkins env vars with ${env.VAR_NAME} here
+                        source ${env.VENV_DIR}/bin/activate 
 
-                        STATIC_ROOT_DIR="${env.APP_DIR}/staticfiles"
-                        echo "Ensuring static root directory exists: ${STATIC_ROOT_DIR}"
-                        mkdir -p "${STATIC_ROOT_DIR}" 
-                        chown $(whoami):$(whoami) "${STATIC_ROOT_DIR}" 
+                        # Ensure staticfiles directory exists using the environment variable
+                        echo "Ensuring static root directory exists: ${env.APP_DIR}/staticfiles"
+                        mkdir -p "${env.APP_DIR}/staticfiles" 
+                        chown $(whoami):$(whoami) "${env.APP_DIR}/staticfiles" 
 
                         echo "Installing/Updating backend dependencies..."
                         pip install -r requirements.txt
@@ -135,19 +134,19 @@ pipeline {
                         sudo /usr/local/bin/supervisord -c /etc/supervisord.conf || echo "Supervisord running or failed (check logs)"
 
                         echo "Restarting Gunicorn via Supervisor..."
-                        echo "Running command: sudo /usr/local/bin/supervisorctl -c /etc/supervisord.conf restart hrms_gunicorn"
-                        sudo -n /usr/local/bin/supervisorctl -c /etc/supervisord.conf restart hrms_gunicorn
-                        SUPERVISORCTL_EXIT_CODE=$?
+                         # NOTE: Because of NOPASSWD: ALL, we don't strictly NEED sudo -n check, 
+                        # but leave it for now or revert to simpler sudo command
+                       sudo -n /usr/local/bin/supervisorctl -c /etc/supervisord.conf restart hrms_gunicorn
+                        SUPERVISORCTL_EXIT_CODE=$? # Use $? for shell exit code
                          echo "supervisorctl command exit code: $SUPERVISORCTL_EXIT_CODE"
                         if [ $SUPERVISORCTL_EXIT_CODE -ne 0 ]; then
                              echo "ERROR: supervisorctl command failed"
-                             # Optionally try without -n
-                             # sudo /usr/local/bin/supervisorctl -c /etc/supervisord.conf restart hrms_gunicorn
                              exit $SUPERVISORCTL_EXIT_CODE
                         fi
 
                         echo "Backend deployment steps completed."
-                    """
+                    # CHANGE HERE: Closing triple single quotes
+                    '''                      
                  }
             }
         }
