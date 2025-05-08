@@ -23,7 +23,7 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }
     stages {
-        stage('Cleanup') { // Optional but good practice stage
+        stage('Cleanup') {
             steps {
                 echo "Cleaning workspace..."
                 cleanWs() 
