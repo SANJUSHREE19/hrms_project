@@ -41,7 +41,7 @@ function MainLayout() {
                         )}
                    </SignedIn>
                    <SignedOut>
-                       <Link to="/login">Login</Link>
+                       <Link to="/">Login</Link>
                    </SignedOut>
                 </nav>
             </header>

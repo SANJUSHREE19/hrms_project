@@ -13,11 +13,15 @@ from dotenv import load_dotenv
 from django.conf import settings
 import logging
 
-from .models import User, EmployeeProfile
-
-
-load_dotenv()
 logger = logging.getLogger(__name__)
+
+logger.critical("CRITICAL: api.auth_utils.py - MODULE LOADED AND LOGGER IS WORKING!")
+logger.error("ERROR: api.auth_utils.py - Module loaded, error log test.")
+logger.info("INFO: api.auth_utils.py - Module loaded, info log test.")
+logger.debug("DEBUG: api.auth_utils.py - Module loaded, debug log test.")
+
+from .models import User, EmployeeProfile
+load_dotenv()
 
 # --- Clerk Settings ---
 CLERK_PUBLISHABLE_KEY = settings.CLERK_PUBLISHABLE_KEY
@@ -151,6 +155,7 @@ class HasClerkRole(BasePermission):
                         role='employee',  # Assign default role
                         is_active=True
                     )
+                    print(f"JIT Provisioning: Created user {user.email} with role {user.role}")
                     logger.info(f"Created new local user {user.email} via JIT.")
 
                     # Create the associated EmployeeProfile record

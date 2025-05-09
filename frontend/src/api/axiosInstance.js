@@ -14,7 +14,7 @@ export const getAuthenticatedInstance = async (getToken) => {
     try {
         // --- Explicitly request the template ---
         const token = await getToken({ template: 'HR-EDGE' }); // Use the name from your Clerk Dashboard
-
+        console.log("Clerk token (HR-EDGE):", token); // Debug log
         if (token) {
             axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         } else {

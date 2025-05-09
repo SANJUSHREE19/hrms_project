@@ -7,9 +7,9 @@ import boto3 # Import boto3 to fetch parameters
 load_dotenv() # Keep loading from .env for local dev, override below
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+print(f"DEBUG settings.py: BASE_DIR is {BASE_DIR}")
 
 LOG_FILE_PATH_DEBUG = BASE_DIR / 'logs/django.log'
-print(f"DEBUG: settings.py -> Calculated log file path: {LOG_FILE_PATH_DEBUG.resolve()}") 
 
 # --- Fetch Secrets from AWS Parameter Store ---
 # Assumes EC2 instance has role with SSM GetParameter permissions
