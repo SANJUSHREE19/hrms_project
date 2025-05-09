@@ -33,7 +33,6 @@ function UserManagement() {
 
     // --- Handler Functions for Actions (Basic Implementation) ---
     const handleRoleChange = async (clerkId, newRole) => {
-        console.log(`Changing role for ${clerkId} to ${newRole}`);
         setError(null); // Clear previous errors
         try {
             const apiClient = await getAuthenticatedInstance(getToken);
@@ -48,7 +47,6 @@ function UserManagement() {
 
     const handleActiveToggle = async (clerkId, currentStatus) => {
         const newStatus = !currentStatus;
-        console.log(`Setting active status for ${clerkId} to ${newStatus}`);
         setError(null);
         try {
             const apiClient = await getAuthenticatedInstance(getToken);

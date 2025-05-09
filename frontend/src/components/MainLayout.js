@@ -18,7 +18,6 @@ function MainLayout() {
     const { userProfile, isLoading, error } = useUserProfile();
     const userRole = userProfile?.user?.role; // Access role correctly
 
-    console.log("MainLayout Context:", { userProfile, isLoading, error }); // Debug log inside layout
 
     return (
         <div className="App">
@@ -26,7 +25,7 @@ function MainLayout() {
                 <h1>HR Management System</h1>
                 <nav>
                    <SignedIn>
-                        <UserButton afterSignOutUrl='/login' />
+                        <UserButton afterSignOutUrl='/' />
                         {/* Ensure Fetcher is within SignedIn if it relies on auth */}
                         {/* <UserProfileFetcher />  <- This might be redundant if context loads correctly */}
                         <Link to="/">Home</Link>
@@ -51,7 +50,7 @@ function MainLayout() {
                 {/* Routes component now renders directly */}
                 <Routes>
                     {/* Public Route */}
-                   <Route path="/login" element={<LoginPage />} />
+                   <Route path="/" element={<LoginPage />} />
 
                    {/* Protected Routes - These will use context correctly */}
                    <Route path="/" element={

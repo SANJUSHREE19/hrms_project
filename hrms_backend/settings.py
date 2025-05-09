@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 load_dotenv() # Keep loading from .env for local dev, override below
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-logger.error(f"DEBUG settings.py: BASE_DIR is {BASE_DIR}")
 
 LOG_FILE_PATH_DEBUG = BASE_DIR / 'logs/django.log'
 

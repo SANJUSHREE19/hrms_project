@@ -95,19 +95,14 @@ class HasClerkRole(BasePermission):
         auth_header = request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith('Bearer '):
             self.message = 'Unauthorized: Missing or invalid Authorization header.'
-            logger.warning("HasClerkRole: Missing or invalid Authorization header.")
             return False
         token = auth_header.split(' ')[1]
-        logger.debug(f"HasClerkRole: Token received: {token[:20]}...")
         try:
-            logger.info("HasClerkRole: Attempting to verify token...")
             session_claims = verify_clerk_token(token)
             logger.info(f"HasClerkRole: Token verified. Claims: {session_claims}")
             clerk_user_id = session_claims.get('sub')
-            logger.info(f"HasClerkRole: Extracted clerk_user_id: {clerk_user_id}")
             if not clerk_user_id:
                  self.message = 'Unauthorized: Invalid token claims (missing sub).'
-                 logger.error(f"HasClerkRole: clerk_user_id is missing or None. Claims were: {session_claims}")
                  return False
 
             # Try fetching the user first
@@ -133,7 +128,6 @@ class HasClerkRole(BasePermission):
                     if not email:
                         # Cannot create user without email
                         self.message = 'Forbidden: Cannot create user profile, missing email claim in token.'
-                        logger.error(f"JIT failed for {clerk_user_id} - Missing email claim. Available: {list(session_claims.keys())}")
                         return False # Fail permission check
 
                     # Create the local User record

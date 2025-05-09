@@ -58,7 +58,6 @@ function DepartmentManagement() {
                  manager: newDeptManagerId || null
                  // If backend requires valid ID, ensure '' isn't sent if required
             };
-             console.log("Sending Payload:", payload)
 
             await apiClient.post('/departments/', payload);
 

@@ -21,7 +21,6 @@ export const UserProfileProvider = ({ children }) => {
                 try {
                     const apiClient = await getAuthenticatedInstance(getToken);
                     const response = await apiClient.get('/me/'); // Your backend endpoint
-                    console.log( response.data.user.role);
                     
                     setUserProfile(response.data);
                 } catch (err) {

@@ -86,7 +86,6 @@ function PayrollDashboard() {
      // Handle Processing Payroll
      const handleProcessPayroll = async (runId) => {
          setError(null);
-         console.log(`Requesting processing for Pay Run ID: ${runId}`);
          // Optional: Add a confirmation dialog here
          try {
             const apiClient = await getAuthenticatedInstance(getToken);
