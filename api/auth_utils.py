@@ -18,17 +18,6 @@ logger = logging.getLogger(__name__)
 from .models import User, EmployeeProfile
 load_dotenv()
 
-# --- Clerk Settings ---
-CLERK_PUBLISHABLE_KEY = settings.CLERK_PUBLISHABLE_KEY
-CLERK_SECRET_KEY = settings.CLERK_SECRET_KEY
-logger.info(f"Using provided CLERK_PUBLISHABLE_KEY: {CLERK_PUBLISHABLE_KEY}")
-CLERK_ISSUER_URL = "https://balanced-parrot-21.clerk.accounts.dev"
-CLERK_JWKS_URL = "https://balanced-parrot-21.clerk.accounts.dev/.well-known/jwks.json"
-logger.info(f"Using provided CLERK_ISSUER_URL: {CLERK_ISSUER_URL}")
-
-if not CLERK_PUBLISHABLE_KEY:
-    raise ValueError("Clerk Publishable Key not found in environment variables (used to derive domain)")
-
 
 # Function to get JWKs with caching
 def get_jwks():
@@ -36,7 +25,7 @@ def get_jwks():
     if jwks:
         return jwks
     try:
-        response = requests.get(CLERK_JWKS_URL, timeout=10) # Added timeout
+        response = requests.get("https://balanced-parrot-21.clerk.accounts.dev/.well-known/jwks.json", timeout=10) # Added timeout
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         jwks_data = response.json()
         cache.set('jwks', jwks_data, timeout=3600) # Cache for 1 hour
@@ -75,7 +64,7 @@ def verify_clerk_token(token):
             token,
             rsa_key,
             algorithms=["RS256"],
-            issuer=CLERK_ISSUER_URL,
+            issuer="https://balanced-parrot-21.clerk.accounts.dev",
             # Audience might be the frontend API key/publishable key or specific identifier
             # Set audience validation based on Clerk settings if needed. Often can be omitted initially.
             # audience="YOUR_CLERK_AUDIENCE"
