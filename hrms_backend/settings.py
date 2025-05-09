@@ -3,11 +3,14 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 import boto3 # Import boto3 to fetch parameters
+import logging
+
+logger = logging.getLogger(__name__)
 
 load_dotenv() # Keep loading from .env for local dev, override below
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-print(f"DEBUG settings.py: BASE_DIR is {BASE_DIR}")
+logger.error(f"DEBUG settings.py: BASE_DIR is {BASE_DIR}")
 
 LOG_FILE_PATH_DEBUG = BASE_DIR / 'logs/django.log'
 
@@ -22,9 +25,9 @@ try:
             response = ssm.get_parameter(Name=name, WithDecryption=True)
             return response['Parameter']['Value']
         except Exception as e:
-            print(f"Warning: Could not fetch SSM parameter '{name}'. Error: {e}")
+            logger.error(f"Warning: Could not fetch SSM parameter '{name}'. Error: {e}")
             if default is not None:
-                print(f"Using default value for {name}.")
+                logger.error(f"Using default value for {name}.")
                 return default
             else:
                 raise # Re-raise if no default and param is mandatory
@@ -35,7 +38,7 @@ try:
     CLERK_PUBLISHABLE_KEY = os.getenv('VITE_CLERK_PUBLISHABLE_KEY', get_ssm_parameter('/hrms/prod/clerk/publishable_key'))
     CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL', get_ssm_parameter('/hrms/prod/clerk/issuer_url'))
     CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', get_ssm_parameter('/hrms/prod/clerk/jwks_url'))
-    print(f"DEBUG settings.py: CLERK_JWKS_URL is {CLERK_JWKS_URL} in try block")
+    logger.info(f"DEBUG settings.py: CLERK_JWKS_URL is {CLERK_JWKS_URL} in try block")
 
     DB_NAME = os.getenv('DB_NAME', get_ssm_parameter('/hrms/prod/db/name'))
     DB_USER = os.getenv('DB_USER', get_ssm_parameter('/hrms/prod/db/user'))
@@ -62,14 +65,14 @@ try:
 
 
 except Exception as e:
-    print(f"CRITICAL: Could not initialize settings from SSM. Error: {e}")
+    logger.error(f"CRITICAL: Could not initialize settings from SSM. Error: {e}")
     # Define minimal fallbacks or raise an exception
     # Fallback (INSECURE - replace or ensure parameters are fetched)
     SECRET_KEY = os.getenv('DJANGO_SECRET_KEY',"GuessWhat?")
     CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY', "sk_test_8HFxPqpjfxZuMLeEElsX4t3tVBlEp9eZtW0QpMOWuO")
     CLERK_PUBLISHABLE_KEY = os.getenv('VITE_CLERK_PUBLISHABLE_KEY', "pk_test_YmFsYW5jZWQtcGFycm90LTIxLmNsZXJrLmFjY291bnRzLmRldiQ")
     CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL',"https://balanced-parrot-21.clerk.accounts.dev")
-    print(f"DEBUG settings.py: CLERK_ISSUER_URL is {CLERK_ISSUER_URL} in except block")
+    logger.info(f"DEBUG settings.py: CLERK_ISSUER_URL is {CLERK_ISSUER_URL} in except block")
     CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', "https://balanced-parrot-21.clerk.accounts.dev/.well-known/jwks.json")
     DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1']
     # MODIFIED: Fallback ALLOWED_HOSTS to include EC2 details if SSM fails catastrophically
@@ -80,8 +83,7 @@ except Exception as e:
     DB_HOST = os.getenv('DB_HOST', 'localhost')
     DB_PORT = os.getenv('DB_PORT', '3306')
 
-    
-print(f"CRITICAL: CLERK_PUBLISHABLE_KEY is not set in environment or SSM.{CLERK_PUBLISHABLE_KEY}")
+
 if not CLERK_ISSUER_URL:
     # Fallback to derivation ONLY if explicit SSM param is missing
     if CLERK_PUBLISHABLE_KEY:
@@ -89,19 +91,19 @@ if not CLERK_ISSUER_URL:
             # Ensure this derivation matches your Clerk domain structure exactly
             domain_part = CLERK_PUBLISHABLE_KEY.split('_test_')[-1].split('$')[0] if '_test_' in CLERK_PUBLISHABLE_KEY else CLERK_PUBLISHABLE_KEY.split('_live_')[-1].split('$')[0]
             CLERK_ISSUER_URL = f"https://{domain_part}.clerk.accounts.dev"
-            print(f"Derived CLERK_ISSUER_URL: {CLERK_ISSUER_URL} as it was not found in env/SSM.")
+            logger.info(f"Derived CLERK_ISSUER_URL: {CLERK_ISSUER_URL} as it was not found in env/SSM.")
         except Exception as e:
-            print(f"Failed to derive CLERK_ISSUER_URL from PK: {e}")
-            raise print("CRITICAL: CLERK_ISSUER_URL could not be determined.")
+            logger.error(f"Failed to derive CLERK_ISSUER_URL from PK: {e}")
+            raise logger.error("CRITICAL: CLERK_ISSUER_URL could not be determined.")
     else:
-        raise print("CRITICAL: CLERK_ISSUER_URL not set and cannot derive from missing CLERK_PUBLISHABLE_KEY.")
+        raise logger.error("CRITICAL: CLERK_ISSUER_URL not set and cannot derive from missing CLERK_PUBLISHABLE_KEY.")
 
 if not CLERK_JWKS_URL:
     if CLERK_ISSUER_URL:
         CLERK_JWKS_URL = f"{CLERK_ISSUER_URL}/.well-known/jwks.json"
-        print(f"Derived CLERK_JWKS_URL: {CLERK_JWKS_URL} as it was not found in env/SSM.")
+        logger.error(f"Derived CLERK_JWKS_URL: {CLERK_JWKS_URL} as it was not found in env/SSM.")
     else:
-        raise print("CRITICAL: CLERK_JWKS_URL not set and cannot derive from missing CLERK_ISSUER_URL.")
+        raise logger.error("CRITICAL: CLERK_JWKS_URL not set and cannot derive from missing CLERK_ISSUER_URL.")
 # CSRF Trusted Origins (Needed if Frontend/Backend on different domains)
 # MODIFIED: Replace with your actual CloudFront domain name
 CLOUDFRONT_DOMAIN_NAME = "d34aj6w546j7d5.cloudfront.net"
@@ -244,15 +246,15 @@ if CLERK_PUBLISHABLE_KEY and isinstance(CLERK_PUBLISHABLE_KEY, str):
             CLERK_ISSUER_URL = f"https://{clerk_instance_domain}"
             CLERK_JWKS_URL = f"{CLERK_ISSUER_URL}/.well-known/jwks.json"
         else:
-            print("Warning: CLERK_PUBLISHABLE_KEY format not as expected for deriving CLERK_ISSUER_URL. It might need manual setting or adjustment.")
+            logger.error("Warning: CLERK_PUBLISHABLE_KEY format not as expected for deriving CLERK_ISSUER_URL. It might need manual setting or adjustment.")
             CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL', 'https://your-clerk-issuer-url.com') # Fallback
             CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', f"{CLERK_ISSUER_URL}/.well-known/jwks.json") # Fallback
     except Exception as e:
-        print(f"Warning: Could not parse CLERK_PUBLISHABLE_KEY for CLERK_ISSUER_URL. Error: {e}")
+        logger.error(f"Warning: Could not parse CLERK_PUBLISHABLE_KEY for CLERK_ISSUER_URL. Error: {e}")
         CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL', 'https://your-clerk-issuer-url.com') # Fallback
         CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', f"{CLERK_ISSUER_URL}/.well-known/jwks.json") # Fallback
 else:
-    print("Warning: CLERK_PUBLISHABLE_KEY is not set or not a string. CLERK_ISSUER_URL and CLERK_JWKS_URL may be incorrect.")
+    logger.error("Warning: CLERK_PUBLISHABLE_KEY is not set or not a string. CLERK_ISSUER_URL and CLERK_JWKS_URL may be incorrect.")
     CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL', 'https://your-clerk-issuer-url.com') # Fallback
     CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', f"{CLERK_ISSUER_URL}/.well-known/jwks.json") # Fallback
 
@@ -310,9 +312,9 @@ LOGGING = {
 # Create logs directory if it doesn't exist
 LOG_DIR = BASE_DIR / 'logs'
 if not LOG_DIR.exists():
-    print(f"DEBUG: Creating logs directory: {LOG_DIR.resolve()}") # Add print here too
+    logger.error(f"DEBUG: Creating logs directory: {LOG_DIR.resolve()}")
     try:
         os.makedirs(LOG_DIR, exist_ok=True)
-        print(f"DEBUG: Successfully attempted mkdir for {LOG_DIR.resolve()}")
+        logger.error(f"DEBUG: Successfully attempted mkdir for {LOG_DIR.resolve()}")
     except Exception as e:
-        print(f"DEBUG: ERROR creating log directory {LOG_DIR.resolve()}: {e}")
+        logger.error(f"DEBUG: ERROR creating log directory {LOG_DIR.resolve()}: {e}")

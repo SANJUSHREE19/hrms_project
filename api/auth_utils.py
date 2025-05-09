@@ -15,11 +15,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-logger.critical("CRITICAL: api.auth_utils.py - MODULE LOADED AND LOGGER IS WORKING!")
-logger.error("ERROR: api.auth_utils.py - Module loaded, error log test.")
-logger.info("INFO: api.auth_utils.py - Module loaded, info log test.")
-logger.debug("DEBUG: api.auth_utils.py - Module loaded, debug log test.")
-
 from .models import User, EmployeeProfile
 load_dotenv()
 
