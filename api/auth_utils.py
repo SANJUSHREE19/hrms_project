@@ -21,16 +21,13 @@ load_dotenv()
 # --- Clerk Settings ---
 CLERK_PUBLISHABLE_KEY = settings.CLERK_PUBLISHABLE_KEY
 CLERK_SECRET_KEY = settings.CLERK_SECRET_KEY
+logger.info(f"Using provided CLERK_PUBLISHABLE_KEY: {CLERK_PUBLISHABLE_KEY}")
+CLERK_ISSUER_URL = "https://balanced-parrot-21.clerk.accounts.dev"
+CLERK_JWKS_URL = "https://balanced-parrot-21.clerk.accounts.dev/.well-known/jwks.json"
+logger.info(f"Using provided CLERK_ISSUER_URL: {CLERK_ISSUER_URL}")
 
 if not CLERK_PUBLISHABLE_KEY:
     raise ValueError("Clerk Publishable Key not found in environment variables (used to derive domain)")
-
-# Extract the core domain part (e.g., dazzling-lemming-12.clerk.accounts.dev)
-try:
-    CLERK_ISSUER_URL = settings.CLERK_ISSUER_URL
-    CLERK_JWKS_URL = settings.CLERK_JWKS_URL
-except IndexError:
-    raise ValueError("Could not derive Clerk domain from Publishable Key. Set CLERK_ISSUER_URL manually.")
 
 
 # Function to get JWKs with caching

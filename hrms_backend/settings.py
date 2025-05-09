@@ -72,7 +72,7 @@ except Exception as e:
     CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY', "sk_test_8HFxPqpjfxZuMLeEElsX4t3tVBlEp9eZtW0QpMOWuO")
     CLERK_PUBLISHABLE_KEY = os.getenv('VITE_CLERK_PUBLISHABLE_KEY', "pk_test_YmFsYW5jZWQtcGFycm90LTIxLmNsZXJrLmFjY291bnRzLmRldiQ")
     CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL',"https://balanced-parrot-21.clerk.accounts.dev")
-    logger.info(f"DEBUG settings.py: CLERK_ISSUER_URL is {CLERK_ISSUER_URL} in except block")
+    print(f"DEBUG settings.py: CLERK_ISSUER_URL is {CLERK_ISSUER_URL} in except block")
     CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', "https://balanced-parrot-21.clerk.accounts.dev/.well-known/jwks.json")
     DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1']
     # MODIFIED: Fallback ALLOWED_HOSTS to include EC2 details if SSM fails catastrophically
@@ -84,26 +84,6 @@ except Exception as e:
     DB_PORT = os.getenv('DB_PORT', '3306')
 
 
-if not CLERK_ISSUER_URL:
-    # Fallback to derivation ONLY if explicit SSM param is missing
-    if CLERK_PUBLISHABLE_KEY:
-        try:
-            # Ensure this derivation matches your Clerk domain structure exactly
-            domain_part = CLERK_PUBLISHABLE_KEY.split('_test_')[-1].split('$')[0] if '_test_' in CLERK_PUBLISHABLE_KEY else CLERK_PUBLISHABLE_KEY.split('_live_')[-1].split('$')[0]
-            CLERK_ISSUER_URL = f"https://{domain_part}.clerk.accounts.dev"
-            logger.info(f"Derived CLERK_ISSUER_URL: {CLERK_ISSUER_URL} as it was not found in env/SSM.")
-        except Exception as e:
-            logger.error(f"Failed to derive CLERK_ISSUER_URL from PK: {e}")
-            raise logger.error("CRITICAL: CLERK_ISSUER_URL could not be determined.")
-    else:
-        raise logger.error("CRITICAL: CLERK_ISSUER_URL not set and cannot derive from missing CLERK_PUBLISHABLE_KEY.")
-
-if not CLERK_JWKS_URL:
-    if CLERK_ISSUER_URL:
-        CLERK_JWKS_URL = f"{CLERK_ISSUER_URL}/.well-known/jwks.json"
-        logger.error(f"Derived CLERK_JWKS_URL: {CLERK_JWKS_URL} as it was not found in env/SSM.")
-    else:
-        raise logger.error("CRITICAL: CLERK_JWKS_URL not set and cannot derive from missing CLERK_ISSUER_URL.")
 # CSRF Trusted Origins (Needed if Frontend/Backend on different domains)
 # MODIFIED: Replace with your actual CloudFront domain name
 CLOUDFRONT_DOMAIN_NAME = "d34aj6w546j7d5.cloudfront.net"
@@ -229,34 +209,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Default primary key field type
 # https://docs.djangoproject.com/en/stable/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Auth utils also needs clerk keys (Assuming CLERK_PUBLISHABLE_KEY is fetched correctly from SSM)
-# Ensure CLERK_PUBLISHABLE_KEY format is like "pk_live_xxxxxxxxxxxxx" or "pk_test_xxxxxxxxxxx"
-# and the part after the first underscore and before the second (if any, often a $) is the instance ID
-# e.g. pk_live_clerk.yourdomain.com$string or pk_test_happy.frog.123
-if CLERK_PUBLISHABLE_KEY and isinstance(CLERK_PUBLISHABLE_KEY, str):
-    try:
-        # This parsing logic might need adjustment based on your exact CLERK_PUBLISHABLE_KEY format
-        # A common format is "pk_{env}_{instance_id_like_url}"
-        # e.g., pk_live_clerk.example.com$ Vigo -> clerk.example.com
-        # another example: pk_test_foo-bar-123.clerk.accounts.dev -> foo-bar-123.clerk.accounts.dev
-        key_parts = CLERK_PUBLISHABLE_KEY.split('_')
-        if len(key_parts) > 2: # e.g. pk_live_instance.domain.com
-            clerk_instance_domain = key_parts[2].split('$')[0] # Remove potential suffix after $
-            CLERK_ISSUER_URL = f"https://{clerk_instance_domain}"
-            CLERK_JWKS_URL = f"{CLERK_ISSUER_URL}/.well-known/jwks.json"
-        else:
-            logger.error("Warning: CLERK_PUBLISHABLE_KEY format not as expected for deriving CLERK_ISSUER_URL. It might need manual setting or adjustment.")
-            CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL', 'https://your-clerk-issuer-url.com') # Fallback
-            CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', f"{CLERK_ISSUER_URL}/.well-known/jwks.json") # Fallback
-    except Exception as e:
-        logger.error(f"Warning: Could not parse CLERK_PUBLISHABLE_KEY for CLERK_ISSUER_URL. Error: {e}")
-        CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL', 'https://your-clerk-issuer-url.com') # Fallback
-        CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', f"{CLERK_ISSUER_URL}/.well-known/jwks.json") # Fallback
-else:
-    logger.error("Warning: CLERK_PUBLISHABLE_KEY is not set or not a string. CLERK_ISSUER_URL and CLERK_JWKS_URL may be incorrect.")
-    CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL', 'https://your-clerk-issuer-url.com') # Fallback
-    CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', f"{CLERK_ISSUER_URL}/.well-known/jwks.json") # Fallback
 
 
 # Logging configuration (Example - customize as needed)
