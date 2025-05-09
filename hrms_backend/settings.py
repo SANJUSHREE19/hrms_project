@@ -219,28 +219,30 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'simple', # Using simple formatter for console
+            'formatter': 'simple',
+            'level': 'DEBUG', # Keep console at DEBUG for now
         },
         'file': {
-            'level': 'INFO',
+            'level': 'DEBUG', # Temporarily set file to DEBUG to capture everything
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs/django.log', # Path relative to BASE_DIR's parent
+            # Ensure this path is writable by the user Gunicorn runs as
+            'filename': BASE_DIR / 'logs/django.log', # Corrected path to be inside project if BASE_DIR is project root
              'formatter': 'verbose',
         },
     },
-     'formatters': {
+    'formatters': { # Define formatters first
          'verbose': {
-             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}', # Added process/thread
+             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
              'style': '{',
          },
          'simple': {
              'format': '{levelname} {message}',
              'style': '{',
          },
-     },
+    },
     'root': {
         'handlers': ['console', 'file'],
-        'level': 'INFO',
+        'level': 'INFO', # Root level
     },
     'loggers': {
         'django': {
@@ -248,11 +250,16 @@ LOGGING = {
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
             'propagate': False,
         },
-        'myproject.custom': { # Example for custom app logging
+        'api': { # Specific logger for your 'api' app
             'handlers': ['console', 'file'],
-            'level': 'DEBUG', # More verbose for custom app
-            'propagate': False,
+            'level': 'DEBUG', # Set to DEBUG to capture all levels (INFO, ERROR, etc.)
+            'propagate': False, # Don't let it bubble up to root if handled here
         },
+        'api.auth_utils': { # Even more specific for the module
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG', # DEBUG for this module specifically
+            'propagate': False,
+        }
     },
 }
 # Create logs directory if it doesn't exist
