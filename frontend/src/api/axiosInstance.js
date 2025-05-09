@@ -11,18 +11,21 @@ const axiosInstance = axios.create({
 
 // Function to get the token and add it to headers
 export const getAuthenticatedInstance = async (getToken) => {
+    console.log("axiosInstance: Attempting to get authenticated instance...");
     try {
-        // --- Explicitly request the template ---
-        const token = await getToken({ template: 'HR-EDGE' }); // Use the name from your Clerk Dashboard
-        console.log("Clerk token (HR-EDGE):", token); // Debug log
+        console.log("axiosInstance: Calling getToken({ template: 'HR-EDGE' })...");
+        const token = await getToken({ template: 'HR-EDGE' });
+        console.log("axiosInstance: Token received from Clerk:", token ? token.substring(0, 20) + "..." : token); // Log part of token or null
+
         if (token) {
             axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            console.log("axiosInstance: Authorization header SET.");
         } else {
             delete axiosInstance.defaults.headers.common['Authorization'];
-            console.warn("Clerk token (HR-EDGE) not available for API request.");
+            console.warn("axiosInstance: Clerk token (HR-EDGE) was null or undefined. Authorization header NOT SET.");
         }
     } catch (error) {
-        console.error("Error getting Clerk token (HR-EDGE):", error);
+        console.error("axiosInstance: Error getting Clerk token or setting header:", error);
         delete axiosInstance.defaults.headers.common['Authorization'];
     }
     return axiosInstance;
