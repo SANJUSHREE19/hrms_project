@@ -15,7 +15,7 @@ import ProtectedRoute from './ProtectedRoute'; // Import ProtectedRoute
 
 function MainLayout() {
     // --- Now call the hook HERE, inside the child of the Provider ---
-    const { userProfile, isLoading, error } = useUserProfile();
+    const { userProfile, isLoading } = useUserProfile();
     const userRole = userProfile?.user?.role; // Access role correctly
 
 
