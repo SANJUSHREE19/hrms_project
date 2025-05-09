@@ -103,15 +103,37 @@ if not CLERK_JWKS_URL:
         raise print("CRITICAL: CLERK_JWKS_URL not set and cannot derive from missing CLERK_ISSUER_URL.")
 # CSRF Trusted Origins (Needed if Frontend/Backend on different domains)
 # MODIFIED: Replace with your actual CloudFront domain name
-CLOUDFRONT_URL = "https://d34dj6w5467t05.cloudfront.net"
-CSRF_TRUSTED_ORIGINS = [CLOUDFRONT_URL]
+CLOUDFRONT_DOMAIN_NAME = "d34aj6w546j7d5.cloudfront.net"
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{CLOUDFRONT_DOMAIN_NAME}",
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # CORS Allowed Origins
 CORS_ALLOWED_ORIGINS = [
-     CLOUDFRONT_URL # Allow frontend
+    f"https://{CLOUDFRONT_DOMAIN_NAME}",
 ]
 CORS_ALLOW_CREDENTIALS = True
-
+CORS_ALLOW_ALL_METHODS = False
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 INSTALLED_APPS = [ # Ensure boto3 is not needed here usually
     'django.contrib.admin',
     'django.contrib.auth',
