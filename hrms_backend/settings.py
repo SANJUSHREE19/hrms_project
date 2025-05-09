@@ -34,8 +34,8 @@ try:
     CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY', get_ssm_parameter('/hrms/prod/clerk/secret_key'))
     CLERK_PUBLISHABLE_KEY = os.getenv('VITE_CLERK_PUBLISHABLE_KEY', get_ssm_parameter('/hrms/prod/clerk/publishable_key'))
     CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL', get_ssm_parameter('/hrms/prod/clerk/issuer_url'))
-    CLERK_JWKS_URL_DEFAULT_DERIVED = f"{CLERK_ISSUER_URL}/.well-known/jwks.json" if CLERK_ISSUER_URL else None
-    CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', get_ssm_parameter('/hrms/prod/clerk/jwks_url', default=CLERK_JWKS_URL_DEFAULT_DERIVED))
+    CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', get_ssm_parameter('/hrms/prod/clerk/jwks_url'))
+    print(f"DEBUG settings.py: CLERK_JWKS_URL is {CLERK_JWKS_URL} in try block")
 
     DB_NAME = os.getenv('DB_NAME', get_ssm_parameter('/hrms/prod/db/name'))
     DB_USER = os.getenv('DB_USER', get_ssm_parameter('/hrms/prod/db/user'))
@@ -65,12 +65,12 @@ except Exception as e:
     print(f"CRITICAL: Could not initialize settings from SSM. Error: {e}")
     # Define minimal fallbacks or raise an exception
     # Fallback (INSECURE - replace or ensure parameters are fetched)
-    SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'default_secret_key') # <-- Change this to a secure default or raise an error
-    CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY', 'default_clerk_secret_key') # <-- Change this to a secure default or raise an error
-    CLERK_PUBLISHABLE_KEY = os.getenv('VITE_CLERK_PUBLISHABLE_KEY', 'default_clerk_publishable_key') # <-- Change this to a secure default or raise an error
-    CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL', 'https://your-clerk-issuer-url.com') # <-- Change this to a secure default or raise an error
-    CLERK_JWKS_URL_DEFAULT_DERIVED = f"{CLERK_ISSUER_URL}/.well-known/jwks.json" if CLERK_ISSUER_URL else None
-    CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', CLERK_JWKS_URL_DEFAULT_DERIVED) # <-- Change this to a secure default or raise an error
+    SECRET_KEY = os.getenv('DJANGO_SECRET_KEY',"GuessWhat?")
+    CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY', "sk_test_8HFxPqpjfxZuMLeEElsX4t3tVBlEp9eZtW0QpMOWuO")
+    CLERK_PUBLISHABLE_KEY = os.getenv('VITE_CLERK_PUBLISHABLE_KEY', "pk_test_YmFsYW5jZWQtcGFycm90LTIxLmNsZXJrLmFjY291bnRzLmRldiQ")
+    CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL',"https://balanced-parrot-21.clerk.accounts.dev")
+    print(f"DEBUG settings.py: CLERK_ISSUER_URL is {CLERK_ISSUER_URL} in except block")
+    CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', "https://balanced-parrot-21.clerk.accounts.dev/.well-known/jwks.json")
     DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1']
     # MODIFIED: Fallback ALLOWED_HOSTS to include EC2 details if SSM fails catastrophically
     ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'ec2-54-165-184-90.compute-1.amazonaws.com', '54.165.184.90']
@@ -79,6 +79,7 @@ except Exception as e:
     DB_PASSWORD = os.getenv('DB_PASSWORD', 'test_pw') # <-- Add this
     DB_HOST = os.getenv('DB_HOST', 'localhost')
     DB_PORT = os.getenv('DB_PORT', '3306')
+
     
 print(f"CRITICAL: CLERK_PUBLISHABLE_KEY is not set in environment or SSM.{CLERK_PUBLISHABLE_KEY}")
 if not CLERK_ISSUER_URL:
