@@ -11,6 +11,7 @@ pipeline {
         CLOUDFRONT_DISTRIBUTION_ID = 'E30K56N2AOR96V'
         S3_BUCKET_NAME             = 'hrms-frontend-s3-bucket-name'
         STATIC_ROOT_DIR_GROOVY     = "${APP_DIR}/staticfiles"
+        EC2_PUBLIC_DNS_OR_IP       = '54.165.184.90'
         // AWS_CREDENTIALS_ID      = 'aws-jenkins-hrms-user' // Uncomment if using specific IAM User for AWS CLI
     }
 
@@ -41,30 +42,34 @@ pipeline {
             steps {
                 echo "Building React frontend..."
                 sh '''
-                    set -ex 
+                    set -ex
 
                     echo "Verifying Node.js (from Jenkins Tool configuration):"
                     node -v
                     npm -v
 
-                    cd frontend 
+                    cd frontend
                     echo "Installing frontend dependencies..."
-                    npm ci 
+                    npm ci
 
-                    echo "Building production frontend..."
-                    CLERK_KEY=$(aws ssm get-parameter --name "/hrms/prod/clerk/publishable_key" --with-decryption --query "Parameter.Value" --output text --region us-east-1)
+                    echo "Preparing production environment file..."
+                    # Fetch Clerk Publishable Key from SSM
+                    CLERK_KEY=$(aws ssm get-parameter --name "/hrms/prod/clerk/publishable_key" --with-decryption --query "Parameter.Value" --output text --region ${AWS_REGION})
                     
                     if [ -z "$CLERK_KEY" ]; then
-                        echo "ERROR: Failed to fetch VITE_CLERK_PUBLISHABLE_KEY from SSM in us-east-1."
-                        exit 1 
+                        echo "ERROR: Failed to fetch REACT_APP_CLERK_PUBLISHABLE_KEY from SSM in ${AWS_REGION}."
+                        exit 1
                     fi
-                    
-                    # CHANGE HERE: Use REACT_APP_ prefix for Create React App
-                    echo "REACT_APP_CLERK_PUBLISHABLE_KEY=${CLERK_KEY}" > .env.production 
-                    echo "Contents of .env.production:" 
-                    cat .env.production 
 
-                    npm run build # This runs 'react-scripts build'
+                    # Create .env.production file
+                    echo "REACT_APP_CLERK_PUBLISHABLE_KEY=${CLERK_KEY}" > .env.production
+                    echo "REACT_APP_API_BASE_URL=http://${EC2_PUBLIC_DNS_OR_IP}/api" >> .env.production
+                    
+                    echo "Contents of .env.production:"
+                    cat .env.production
+
+                    echo "Building production frontend..."
+                    npm run build
                 '''
             }
         }
