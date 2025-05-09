@@ -78,7 +78,27 @@ except Exception as e:
     DB_HOST = os.getenv('DB_HOST', 'localhost')
     DB_PORT = os.getenv('DB_PORT', '3306')
     
+print(f"CRITICAL: CLERK_PUBLISHABLE_KEY is not set in environment or SSM.{CLERK_PUBLISHABLE_KEY}")
+if not CLERK_ISSUER_URL:
+    # Fallback to derivation ONLY if explicit SSM param is missing
+    if CLERK_PUBLISHABLE_KEY:
+        try:
+            # Ensure this derivation matches your Clerk domain structure exactly
+            domain_part = CLERK_PUBLISHABLE_KEY.split('_test_')[-1].split('$')[0] if '_test_' in CLERK_PUBLISHABLE_KEY else CLERK_PUBLISHABLE_KEY.split('_live_')[-1].split('$')[0]
+            CLERK_ISSUER_URL = f"https://{domain_part}.clerk.accounts.dev"
+            print(f"Derived CLERK_ISSUER_URL: {CLERK_ISSUER_URL} as it was not found in env/SSM.")
+        except Exception as e:
+            print(f"Failed to derive CLERK_ISSUER_URL from PK: {e}")
+            raise print("CRITICAL: CLERK_ISSUER_URL could not be determined.")
+    else:
+        raise print("CRITICAL: CLERK_ISSUER_URL not set and cannot derive from missing CLERK_PUBLISHABLE_KEY.")
 
+if not CLERK_JWKS_URL:
+    if CLERK_ISSUER_URL:
+        CLERK_JWKS_URL = f"{CLERK_ISSUER_URL}/.well-known/jwks.json"
+        print(f"Derived CLERK_JWKS_URL: {CLERK_JWKS_URL} as it was not found in env/SSM.")
+    else:
+        raise print("CRITICAL: CLERK_JWKS_URL not set and cannot derive from missing CLERK_ISSUER_URL.")
 # CSRF Trusted Origins (Needed if Frontend/Backend on different domains)
 # MODIFIED: Replace with your actual CloudFront domain name
 CLOUDFRONT_URL = "https://d34dj6w5467t05.cloudfront.net"

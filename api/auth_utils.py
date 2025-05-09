@@ -50,10 +50,10 @@ def get_jwks():
         cache.set('jwks', jwks_data, timeout=3600) # Cache for 1 hour
         return jwks_data
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching JWKS: {e}")
+        logger.error(f"Error fetching JWKS: {e}")
         return None # Return None if fetch fails
     except ValueError as e: # Catches JSON decoding errors
-        print(f"Error decoding JWKS JSON: {e}")
+        logger.error(f"Error decoding JWKS JSON: {e}")
         return None
 
 # --- Verification Function ---
@@ -97,10 +97,10 @@ def verify_clerk_token(token):
         return payload
 
     except JWTError as e:
-        print(f"Token validation error: {e}") # Log specific error
+        logger.error(f"Token validation error: {e}") # Log specific error
         raise # Re-raise the JWTError
     except Exception as e:
-         print(f"An unexpected error occurred during token verification: {e}")
+         logger.error(f"An unexpected error occurred during token verification: {e}")
          raise JWTError(f"Unexpected verification error: {e}")
 
 
@@ -164,7 +164,6 @@ class HasClerkRole(BasePermission):
                         role='employee',  # Assign default role
                         is_active=True
                     )
-                    print(f"JIT Provisioning: Created user {user.email} with role {user.role}")
                     logger.info(f"Created new local user {user.email} via JIT.")
 
                     # Create the associated EmployeeProfile record
@@ -172,7 +171,6 @@ class HasClerkRole(BasePermission):
                         user=user,
                         job_title='Pending Assignment'
                     )
-                    logger.info(f"Created EmployeeProfile for {user.email} via JIT.")
 
                     # User is now created, continue to role check with this new 'user' object
 
@@ -202,7 +200,7 @@ class HasClerkRole(BasePermission):
             logger.error(f"HasClerkRole: JWTError during token validation: {e}", exc_info=True)
             return False
         except Exception as e:
-            print(f"Unexpected error in HasClerkRole permission check: {e}")
+            logger.error(f"Unexpected error in HasClerkRole permission check: {e}")
             self.message = 'Internal Server Error during authentication check.'
             logger.error(f"HasClerkRole: Unexpected error in permission check: {e}", exc_info=True) 
             return False
