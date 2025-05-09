@@ -40,7 +40,7 @@ function MainLayout() {
                         )}
                    </SignedIn>
                    <SignedOut>
-                       <Link to="/">Login</Link>
+                       <Link to="/login">Login</Link>
                    </SignedOut>
                 </nav>
             </header>
@@ -50,7 +50,7 @@ function MainLayout() {
                 {/* Routes component now renders directly */}
                 <Routes>
                     {/* Public Route */}
-                   <Route path="/" element={<LoginPage />} />
+                   <Route path="/login" element={<LoginPage />} />
 
                    {/* Protected Routes - These will use context correctly */}
                    <Route path="/" element={

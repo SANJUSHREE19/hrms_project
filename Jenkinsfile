@@ -136,7 +136,6 @@ pipeline {
 
                       echo "Installing/Updating backend dependencies..."
                       pip install -r requirements.txt
-                      pip install boto3 mysqlclient 
 
                       echo "Collecting static files..."
                       python manage.py collectstatic --noinput
