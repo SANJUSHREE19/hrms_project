@@ -114,20 +114,29 @@ class HasClerkRole(BasePermission):
         auth_header = request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith('Bearer '):
             self.message = 'Unauthorized: Missing or invalid Authorization header.'
+            logger.warning("HasClerkRole: Missing or invalid Authorization header.")
             return False
         token = auth_header.split(' ')[1]
+        logger.debug(f"HasClerkRole: Token received: {token[:20]}...")
         try:
+            logger.info("HasClerkRole: Attempting to verify token...")
             session_claims = verify_clerk_token(token)
+            logger.info(f"HasClerkRole: Token verified. Claims: {session_claims}")
             clerk_user_id = session_claims.get('sub')
+            logger.info(f"HasClerkRole: Extracted clerk_user_id: {clerk_user_id}")
             if not clerk_user_id:
                  self.message = 'Unauthorized: Invalid token claims (missing sub).'
+                 logger.error(f"HasClerkRole: clerk_user_id is missing or None. Claims were: {session_claims}")
                  return False
 
             # Try fetching the user first
             try:
+                logger.info(f"HasClerkRole: Attempting User.objects.get(clerk_id='{clerk_user_id}')")
                 user = User.objects.get(clerk_id=clerk_user_id)
+                logger.info(f"HasClerkRole: User {clerk_user_id} found in DB: {user.email}")
                 if not user.is_active:
                      self.message = 'User account is inactive.'
+                     logger.warning(f"HasClerkRole: User {user.email} is inactive.")
                      return False
                 # User exists and is active, fall through to role check below
 
@@ -190,10 +199,12 @@ class HasClerkRole(BasePermission):
 
         except JWTError as e:
             self.message = f'Unauthorized: Token validation failed - {e}'
+            logger.error(f"HasClerkRole: JWTError during token validation: {e}", exc_info=True)
             return False
         except Exception as e:
             print(f"Unexpected error in HasClerkRole permission check: {e}")
             self.message = 'Internal Server Error during authentication check.'
+            logger.error(f"HasClerkRole: Unexpected error in permission check: {e}", exc_info=True) 
             return False
 
 
