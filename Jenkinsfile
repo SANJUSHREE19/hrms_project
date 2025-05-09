@@ -12,6 +12,7 @@ pipeline {
         S3_BUCKET_NAME             = 'hrms-frontend-s3-bucket-name'
         STATIC_ROOT_DIR_GROOVY     = "${APP_DIR}/staticfiles"
         EC2_PUBLIC_DNS_OR_IP       = '54.165.184.90'
+        EC2_HOST_FOR_API           = '54.165.184.90'
         // AWS_CREDENTIALS_ID      = 'aws-jenkins-hrms-user' // Uncomment if using specific IAM User for AWS CLI
     }
 
@@ -53,7 +54,6 @@ pipeline {
                     npm ci
 
                     echo "Preparing production environment file..."
-                    # Fetch Clerk Publishable Key from SSM
                     CLERK_KEY=$(aws ssm get-parameter --name "/hrms/prod/clerk/publishable_key" --with-decryption --query "Parameter.Value" --output text --region ${AWS_REGION})
                     
                     if [ -z "$CLERK_KEY" ]; then
@@ -63,7 +63,7 @@ pipeline {
 
                     # Create .env.production file
                     echo "REACT_APP_CLERK_PUBLISHABLE_KEY=${CLERK_KEY}" > .env.production
-                    echo "REACT_APP_API_BASE_URL=http://${EC2_PUBLIC_DNS_OR_IP}/api" >> .env.production
+                    echo "REACT_APP_API_BASE_URL=https://${EC2_HOST_FOR_API}/api" >> .env.production
                     
                     echo "Contents of .env.production:"
                     cat .env.production

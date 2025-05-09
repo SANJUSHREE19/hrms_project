@@ -48,10 +48,12 @@ try:
     debug_param = get_ssm_parameter('/hrms/prod/debug', default='False').strip().lower()
     DEBUG = debug_param in ['true', '1', 't', 'y', 'yes']
 
+    # If your Nginx is correctly setting X-Forwarded-Proto, Django can use these
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = os.getenv('DJANGO_SECURE_SSL_REDIRECT', 'True').lower() == 'true' # True in prod
+    SESSION_COOKIE_SECURE = os.getenv('DJANGO_SESSION_COOKIE_SECURE', 'True').lower() == 'true' # True in prod
+    CSRF_COOKIE_SECURE = os.getenv('DJANGO_CSRF_COOKIE_SECURE', 'True').lower() == 'true' # True in prod
     # Allowed hosts - GET FROM SSM OR ENV VAR
-    # MODIFIED: Updated default to include EC2 public IP and DNS as an example.
-    # Ideally, set '/hrms/prod/allowed_hosts' in SSM to:
-    # "ec2-54-165-184-90.compute-1.amazonaws.com,54.165.184.90,localhost,your.custom.domain"
     allowed_hosts_param = get_ssm_parameter(
         '/hrms/prod/allowed_hosts',
         default='localhost,ec2-54-165-184-90.compute-1.amazonaws.com,54.165.184.90'
