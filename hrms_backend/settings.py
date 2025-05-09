@@ -33,17 +33,17 @@ try:
                 raise # Re-raise if no default and param is mandatory
 
     # Override settings from Parameter Store if available
-    SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', get_ssm_parameter('/hrms/prod/django/secret_key'))
-    CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY', get_ssm_parameter('/hrms/prod/clerk/secret_key'))
-    CLERK_PUBLISHABLE_KEY = os.getenv('VITE_CLERK_PUBLISHABLE_KEY', get_ssm_parameter('/hrms/prod/clerk/publishable_key'))
-    CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL', get_ssm_parameter('/hrms/prod/clerk/issuer_url'))
-    CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', get_ssm_parameter('/hrms/prod/clerk/jwks_url'))
+    SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', "GuessWhat?")
+    CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY', "sk_test_8HFxPqpjfxZuMLeEElsX4t3tVBlEp9eZtW0QpMOWuO")
+    CLERK_PUBLISHABLE_KEY = os.getenv('VITE_CLERK_PUBLISHABLE_KEY', "pk_test_YmFsYW5jZWQtcGFycm90LTIxLmNsZXJrLmFjY291bnRzLmRldiQ")
+    CLERK_ISSUER_URL = os.getenv('CLERK_ISSUER_URL', "https://balanced-parrot-21.clerk.accounts.dev")
+    CLERK_JWKS_URL = os.getenv('CLERK_JWKS_URL', "https://balanced-parrot-21.clerk.accounts.dev/.well-known/jwks.json")
     logger.info(f"DEBUG settings.py: CLERK_JWKS_URL is {CLERK_JWKS_URL} in try block")
 
-    DB_NAME = os.getenv('DB_NAME', get_ssm_parameter('/hrms/prod/db/name'))
-    DB_USER = os.getenv('DB_USER', get_ssm_parameter('/hrms/prod/db/user'))
-    DB_PASSWORD = os.getenv('DB_PASSWORD', get_ssm_parameter('/hrms/prod/db/password'))
-    DB_HOST = os.getenv('DB_HOST', get_ssm_parameter('/hrms/prod/db/host'))
+    DB_NAME = os.getenv('DB_NAME', "hrms_db")
+    DB_USER = os.getenv('DB_USER', "db_admin")
+    DB_PASSWORD = os.getenv('DB_PASSWORD', "xD1fy852I9kl")
+    DB_HOST = os.getenv('DB_HOST', "hrms-db.can0qyu46og4.us-east-1.rds.amazonaws.com")
     DB_PORT = os.getenv('DB_PORT', '3306') # Default MySQL port
 
     # Debug requires careful handling - fetch from SSM or use env var
