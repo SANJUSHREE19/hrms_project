@@ -22,7 +22,7 @@ function MainLayout() {
     return (
         <div className="App">
             <header className="App-header">
-                <h1>HR Management System</h1>
+                <h1>HR Edge</h1>
                 <nav>
                    <SignedIn>
                         <UserButton afterSignOutUrl='/' />
